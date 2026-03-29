@@ -5,13 +5,14 @@ threat intelligence, news, and government sources, scores items by relevance, de
 trending topics across multiple days, and publishes a filterable daily digest as a
 static GitHub Pages site.
 
+
 ---
 
 ## How It Works
 
 ```
 [Your machine -- runs daily via Task Scheduler / cron]
-  prism_012.py --output data-json
+  prism.py --output data-json
         |
         v
   data/2026-03-29.json   <-- processed items with scores, trend detection
@@ -31,7 +32,7 @@ The HTML shell is committed once. Only the data files change on each run.
 ## Repository Layout
 
 ```
-prism_012.py          Aggregator script -- runs locally only
+prism.py          Aggregator script -- runs locally only
 prism_config.json     All configuration: feeds, keywords, scoring rules
 index.html            Static GitHub Pages shell -- committed once
 data/
@@ -60,7 +61,7 @@ pip install keyrings.alt
 ### 2. Run a Full Fetch
 
 ```bash
-python prism_012.py --output data-json -v
+python prism.py --output data-json -v
 ```
 
 This fetches all 127 feeds, scores items, runs trend detection against any existing
@@ -93,31 +94,31 @@ Your digest is live at `https://YOUR_USERNAME.github.io/prism/`.
 
 ```bash
 # Standard daily run (recommended)
-python prism_012.py --output data-json
+python prism.py --output data-json
 
 # Full refresh: bypass all caches, widen the lookback window
-python prism_012.py --output data-json --no-fetch-cache --no-cache --lookback 48
+python prism.py --output data-json --no-fetch-cache --no-cache --lookback 48
 
 # Verbose -- shows every feed fetch, item score, age-dropped counts
-python prism_012.py --output data-json -v
+python prism.py --output data-json -v
 
 # High signal only -- surface CRITICAL and HIGH items
-python prism_012.py --output data-json --min-score 5
+python prism.py --output data-json --min-score 5
 
 # Test all feed URLs -- writes feeds_check.json
-python prism_012.py --check-feeds
+python prism.py --check-feeds
 
 # Test feeds for a single group
-python prism_012.py --check-feeds --group government
+python prism.py --check-feeds --group government
 
 # Store API key in OS keychain (AlienVault OTX)
-python prism_012.py --set-key otx
+python prism.py --set-key otx
 
 # Show which API keys are configured
-python prism_012.py --show-keys
+python prism.py --show-keys
 
 # Legacy HTML output (requires template.html alongside script)
-python prism_012.py --output html
+python prism.py --output html
 ```
 
 ---
@@ -188,10 +189,10 @@ that could be committed to git.
 
 ```bash
 # Store key (input is hidden)
-python prism_012.py --set-key otx
+python prism.py --set-key otx
 
 # Verify it is stored
-python prism_012.py --show-keys
+python prism.py --show-keys
 ```
 
 Supported keys:
@@ -206,7 +207,7 @@ Supported keys:
 Create a basic task that runs daily:
 
 **Program:** `python`
-**Arguments:** `C:\path\to\prism_012.py --output data-json`
+**Arguments:** `C:\path\to\prism.py --output data-json`
 **Start in:** `C:\path\to\prism\`
 
 After the Python task, create a second task (or a `.bat` file) to push:
@@ -223,7 +224,7 @@ git push
 
 ```cron
 # Run at 7am daily, push results to GitHub
-0 7 * * * cd /path/to/prism && python prism_012.py --output data-json >> prism_cron.log 2>&1
+0 7 * * * cd /path/to/prism && python prism.py --output data-json >> prism_cron.log 2>&1
 5 7 * * * cd /path/to/prism && git add data/ && git commit -m "data: $(date +\%Y-\%m-\%d)" && git push
 ```
 
@@ -290,7 +291,7 @@ jobs:
           EOF
 
       - name: Run Prism
-        run: python prism_012.py --output data-json
+        run: python prism.py --output data-json
 
       - name: Commit and push data files
         run: |
@@ -320,7 +321,7 @@ written to any file in the repository.
 Run this after adding or changing feeds to verify all URLs are reachable:
 
 ```bash
-python prism_012.py --check-feeds
+python prism.py --check-feeds
 ```
 
 Output is written to `feeds_check.json`. Upload it to Claude for analysis and
