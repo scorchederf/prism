@@ -1,0 +1,1246 @@
+{
+  "meta": {
+    "description": "Prism -- daily intelligence aggregator configuration",
+    "version": "2.1",
+    "last_updated": "2026-03-29",
+    "notes": [
+      "Edit this file only -- never edit the script for data changes",
+      "Each group is processed independently and rendered as a separate section",
+      "groups.threat_intel.feeds -- security research, advisories, exploits, vendor blogs",
+      "groups.news.feeds -- trusted news sources; filter by country_tag in future",
+      "groups.government.feeds -- official government cyber and national security publications",
+      "fetch_cache_ttl_seconds -- how long to cache a raw feed response locally before re-fetching",
+      "Run: python prism.py --check-feeds to verify all feed URLs",
+      "Run: python prism.py --set-key otx to store AlienVault OTX API key",
+      "Feed URL audit 2026-03-29: Fixed MSRC, WithSecure, CyberWire, Secureworks->Sophos, Picus dedup, Europol; removed dead Reuters; disabled ENISA (RSS discontinued); noted CISA RSS status",
+      "News group: added 20 feeds, news_categories auto-classification rules, keyword scoring for LOW/MEDIUM/HIGH/CRITICAL tiers",
+      "Feed audit 2026-03-29: fixed 24 broken feeds from feeds_check.json results",
+      "max_items raised from 200 to 500 per group -- 200 was too restrictive across 87+ feeds"
+    ],
+    "feed_count": 127
+  },
+  "settings": {
+    "fetch_cache_ttl_seconds": 3600,
+    "fetch_cache_dir": "prism_cache",
+    "feed_timeout_seconds": 5,
+    "lookback_hours": 24,
+    "max_items": 500,
+    "min_score": 0
+  },
+  "data": {
+    "groups": {
+      "threat_intel": {
+        "label": "Threat Intelligence",
+        "enabled": true,
+        "keywords": {
+          "palo alto": 5,
+          "pan-os": 5,
+          "panos": 5,
+          "globalprotect": 5,
+          "cortex": 4,
+          "netskope": 4,
+          "active directory": 5,
+          "kerberos": 4,
+          "ntlm": 4,
+          "azure ad": 4,
+          "entra": 4,
+          "ldap": 3,
+          "adcs": 4,
+          "certipy": 3,
+          "laps": 3,
+          "crowdstrike": 5,
+          "falcon": 4,
+          "windows": 4,
+          "win32": 3,
+          "mimecast": 4,
+          "exchange": 3,
+          "outlook": 3,
+          "o365": 3,
+          "microsoft 365": 3,
+          "mimikatz": 5,
+          "cobalt strike": 5,
+          "metasploit": 4,
+          "impacket": 4,
+          "bloodhound": 4,
+          "responder": 3,
+          "lsass": 4,
+          "dcsync": 4,
+          "kerberoast": 4,
+          "pass-the-hash": 4,
+          "ransomware": 5,
+          "lateral movement": 4,
+          "c2": 3,
+          "lolbin": 3,
+          "living off the land": 3,
+          "zero-day": 5,
+          "0-day": 5,
+          "rce": 5,
+          "remote code execution": 5,
+          "critical": 3,
+          "exploit": 3,
+          "patch tuesday": 4,
+          "cisa kev": 5,
+          "proof of concept": 3,
+          "poc": 3,
+          "in the wild": 4
+        },
+        "feeds": [
+          {
+            "name": "Cisco Security Advisories",
+            "url": "https://sec.cloudapps.cisco.com/security/center/psirtrss20/CiscoSecurityAdvisory.xml",
+            "category": "advisory",
+            "note": "OK - 50 entries",
+            "trust_tier": 1
+          },
+          {
+            "name": "Microsoft MSRC",
+            "url": "https://api.msrc.microsoft.com/update-guide/rss",
+            "category": "advisory",
+            "country_tag": "US",
+            "note": "Official MSRC RSS via api.msrc.microsoft.com (updated from broken HTML page URL)",
+            "trust_tier": 1
+          },
+          {
+            "name": "NVD CVE Feed",
+            "url": "https://nvd.nist.gov/feeds/xml/cve/misc/nvd-rss-analyzed.xml",
+            "category": "advisory",
+            "note": "OK - 528 entries",
+            "trust_tier": 1
+          },
+          {
+            "name": "SANS ISC",
+            "url": "https://isc.sans.edu/rssfeed.xml",
+            "category": "advisory",
+            "note": "OK - 10 entries",
+            "trust_tier": 1
+          },
+          {
+            "name": "CERT/CC Vulnerability Notes",
+            "url": "https://kb.cert.org/vuls/atomfeed/",
+            "category": "advisory",
+            "note": "OK - 15 entries",
+            "trust_tier": 1
+          },
+          {
+            "name": "Oracle Security Alerts",
+            "url": "https://www.oracle.com/ocom/groups/public/@otn/documents/webcontent/rss-otn-sec.xml",
+            "category": "advisory",
+            "note": "OK - 122 entries",
+            "trust_tier": 1
+          },
+          {
+            "name": "Red Hat Security Blog",
+            "url": "https://www.redhat.com/en/rss/blog/channel/security",
+            "category": "advisory",
+            "note": "OK - 10 entries",
+            "trust_tier": 1
+          },
+          {
+            "name": "Ubuntu Security Notices",
+            "url": "https://ubuntu.com/security/notices/rss.xml",
+            "category": "advisory",
+            "note": "OK - 10 entries",
+            "trust_tier": 1
+          },
+          {
+            "name": "Debian Security Advisories",
+            "url": "https://www.debian.org/security/dsa-long",
+            "category": "advisory",
+            "note": "OK - 30 entries",
+            "trust_tier": 1
+          },
+          {
+            "name": "NIST Cybersecurity Blog",
+            "url": "https://www.nist.gov/blogs/cybersecurity-insights/rss.xml",
+            "category": "advisory",
+            "note": "OK - 40 entries",
+            "trust_tier": 1
+          },
+          {
+            "name": "Google Online Security",
+            "url": "https://feeds.feedburner.com/GoogleOnlineSecurityBlog",
+            "category": "advisory",
+            "note": "OK - 25 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "CrowdStrike Blog",
+            "url": "https://www.crowdstrike.com/blog/feed/",
+            "category": "vendor",
+            "note": "OK - 10 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "Unit 42 (Palo Alto)",
+            "url": "https://unit42.paloaltonetworks.com/feed/",
+            "category": "vendor",
+            "note": "OK - 15 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "Microsoft Security Blog",
+            "url": "https://www.microsoft.com/en-us/security/blog/feed/",
+            "category": "vendor",
+            "note": "OK - 10 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "Fortinet PSIRT",
+            "url": "https://www.fortiguard.com/rss/ir.xml",
+            "category": "advisory",
+            "country_tag": "US",
+            "note": "FortiGuard IR feed - replacing dead psirt-blogs",
+            "trust_tier": 1
+          },
+          {
+            "name": "Symantec / Broadcom",
+            "url": "https://symantec-enterprise-blogs.security.com/blogs/rss/v1/blogs/rss.xml/221",
+            "category": "research",
+            "note": "OK - 10 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "Trend Micro Research",
+            "url": "https://blog.trendmicro.com/feed/",
+            "category": "research",
+            "country_tag": "",
+            "note": "Moved from feeds.trendmicro.com (SSL error) to direct blog feed",
+            "trust_tier": 4
+          },
+          {
+            "name": "SentinelOne Blog",
+            "url": "https://www.sentinelone.com/feed/",
+            "category": "research",
+            "note": "OK - 10 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "Qualys Blog",
+            "url": "https://blog.qualys.com/feed",
+            "category": "vendor",
+            "note": "OK - 10 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "Tenable Blog",
+            "url": "https://www.tenable.com/blog/feed",
+            "category": "vendor",
+            "note": "OK - 10 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "AWS Security Blog",
+            "url": "https://aws.amazon.com/blogs/security/feed/",
+            "category": "vendor",
+            "note": "OK - 20 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "Google Project Zero",
+            "url": "https://googleprojectzero.blogspot.com/feeds/posts/default",
+            "category": "research",
+            "note": "OK - 10 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "Securelist (Kaspersky)",
+            "url": "https://securelist.com/feed/",
+            "category": "research",
+            "note": "OK - 10 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "Recorded Future",
+            "url": "https://www.recordedfuture.com/feed/",
+            "category": "intel",
+            "note": "OK - 50 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "Check Point Research",
+            "url": "https://research.checkpoint.com/feed",
+            "category": "research",
+            "note": "OK - 15 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "Wiz Cloud Threat",
+            "url": "https://www.wiz.io/api/feed/cloud-threat-landscape/rss.xml",
+            "category": "research",
+            "note": "OK - 460 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "Malwarebytes Labs",
+            "url": "https://blog.malwarebytes.com/feed/",
+            "category": "research",
+            "note": "OK - 20 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "WeLiveSecurity (ESET)",
+            "url": "https://www.welivesecurity.com/feed/",
+            "category": "research",
+            "note": "OK - 100 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "Elastic Security Labs",
+            "url": "https://www.elastic.co/security-labs/rss/feed.xml",
+            "category": "research",
+            "note": "OK - 20 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "The DFIR Report",
+            "url": "https://thedfirreport.com/feed/",
+            "category": "research",
+            "note": "OK - 10 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "Red Canary Blog",
+            "url": "https://redcanary.com/blog/feed/",
+            "category": "research",
+            "note": "OK - 10 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "Huntress Blog",
+            "url": "https://www.huntress.com/blog/rss.xml",
+            "category": "research",
+            "note": "OK - 577 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "MDSec Blog",
+            "url": "https://www.mdsec.co.uk/feed/",
+            "category": "research",
+            "note": "OK - 10 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "Rapid7 Blog",
+            "url": "https://blog.rapid7.com/rss/",
+            "category": "research",
+            "note": "OK - 20 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "Rapid7 ETR",
+            "url": "https://blog.rapid7.com/tag/emergent-threat-response/rss/",
+            "category": "research",
+            "note": "OK - 20 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "Varonis Blog",
+            "url": "https://www.varonis.com/blog/feed",
+            "category": "research",
+            "note": "OK - 10 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "Bishop Fox Blog",
+            "url": "https://bishopfox.com/feeds/blog.rss",
+            "category": "research",
+            "note": "OK - 50 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "Horizon3 Attack Team",
+            "url": "https://www.horizon3.ai/feed/",
+            "category": "research",
+            "note": "Old /blog/feed/ had undefined entity; trying root /feed/",
+            "trust_tier": 2
+          },
+          {
+            "name": "Akamai Security Research",
+            "url": "https://feeds.feedburner.com/akamai/blog",
+            "category": "research",
+            "note": "OK - 1475 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "Picus Security Blog",
+            "url": "https://www.picussecurity.com/resource/blog/rss.xml",
+            "category": "research",
+            "note": "URL confirmed from official site structure; 404 may be WAF rate-limiting during check",
+            "trust_tier": 2
+          },
+          {
+            "name": "Intezer Blog",
+            "url": "https://intezer.com/feed/",
+            "category": "research",
+            "note": "Old /blog/feed/ had junk after document; trying /feed/",
+            "trust_tier": 2
+          },
+          {
+            "name": "Flashpoint Blog",
+            "url": "https://flashpoint.io/blog/feed/",
+            "category": "intel",
+            "note": "OK - 30 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "Sekoia.io Blog",
+            "url": "https://blog.sekoia.io/feed/",
+            "category": "intel",
+            "note": "OK - 10 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "Sophos X-Ops / Secureworks CTU",
+            "url": "https://news.sophos.com/en-us/category/threat-research/feed/",
+            "category": "research",
+            "country_tag": "",
+            "note": "General feed timed out; using threat-research category feed",
+            "trust_tier": 2
+          },
+          {
+            "name": "Malware Traffic Analysis",
+            "url": "https://www.malware-traffic-analysis.net/blog-entries.rss",
+            "category": "research",
+            "note": "OK - 3 entries (low frequency, high signal)",
+            "trust_tier": 2
+          },
+          {
+            "name": "ANY.RUN Blog",
+            "url": "https://any.run/cybersecurity-blog/feed/",
+            "category": "research",
+            "note": "OK - 10 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "GreyNoise Blog",
+            "url": "https://www.greynoise.io/blog/rss.xml",
+            "category": "intel",
+            "note": "Old /index.xml was 404; trying /rss.xml",
+            "trust_tier": 2
+          },
+          {
+            "name": "Sysdig Threat Research",
+            "url": "https://sysdig.com/feed/",
+            "category": "research",
+            "note": "OK - 100 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "SpecterOps Blog",
+            "url": "https://posts.specterops.io/feed",
+            "category": "research",
+            "note": "specterops.io/blog/rss/ returned empty; blog content is on Medium at posts.specterops.io",
+            "trust_tier": 2
+          },
+          {
+            "name": "NVISO Security Blog",
+            "url": "https://blog.nviso.eu/feed/",
+            "category": "research",
+            "note": "429 rate-limited in parallel check; works sequentially",
+            "trust_tier": 2
+          },
+          {
+            "name": "Aqua Security Blog",
+            "url": "https://blog.aquasec.com/rss.xml",
+            "category": "research",
+            "note": "OK - 10 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "HarfangLab Blog",
+            "url": "https://harfanglab.io/feed/",
+            "category": "research",
+            "note": "Replaced inactive Avast blog",
+            "trust_tier": 2
+          },
+          {
+            "name": "Black Hills InfoSec",
+            "url": "https://www.blackhillsinfosec.com/feed/",
+            "category": "research",
+            "note": "OK - 906 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "Praetorian Blog",
+            "url": "https://www.praetorian.com/feed/",
+            "category": "research",
+            "note": "OK - 10 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "Full Disclosure",
+            "url": "https://seclists.org/rss/fulldisclosure.rss",
+            "category": "exploit",
+            "note": "OK - 15 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "oss-security",
+            "url": "https://seclists.org/rss/oss-sec.rss",
+            "category": "exploit",
+            "note": "Replaced inactive Bugtraq; old /feed was 404",
+            "trust_tier": 2
+          },
+          {
+            "name": "Exploit-DB",
+            "url": "https://www.exploit-db.com/rss.xml",
+            "category": "exploit",
+            "note": "OK - 50 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "Vulhub PoC Releases",
+            "url": "https://github.com/vulhub/vulhub/commits/master.atom",
+            "category": "exploit",
+            "note": "OK - 20 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "Metasploit Releases",
+            "url": "https://github.com/rapid7/metasploit-framework/releases.atom",
+            "category": "exploit",
+            "note": "Replaced inactive seclists entry with GitHub releases",
+            "trust_tier": 2
+          },
+          {
+            "name": "Ars Technica Security",
+            "url": "https://arstechnica.com/security/feed/",
+            "category": "news",
+            "note": "Fixed: was feeds.arstechnica.com/arstechnica/security (404)",
+            "trust_tier": 3
+          },
+          {
+            "name": "Bleeping Computer",
+            "url": "https://www.bleepingcomputer.com/feed/",
+            "category": "news",
+            "note": "OK - 15 entries",
+            "trust_tier": 3
+          },
+          {
+            "name": "Krebs on Security",
+            "url": "https://krebsonsecurity.com/feed/",
+            "category": "news",
+            "note": "OK - 10 entries",
+            "trust_tier": 3
+          },
+          {
+            "name": "The Hacker News",
+            "url": "https://feeds.feedburner.com/TheHackersNews",
+            "category": "news",
+            "note": "OK - 50 entries",
+            "trust_tier": 3
+          },
+          {
+            "name": "Schneier on Security",
+            "url": "https://www.schneier.com/blog/index.rdf",
+            "category": "news",
+            "note": "429 rate-limited in parallel check; works sequentially",
+            "trust_tier": 3
+          },
+          {
+            "name": "Security Affairs",
+            "url": "https://securityaffairs.com/feed",
+            "category": "news",
+            "note": "OK - 10 entries",
+            "trust_tier": 3
+          },
+          {
+            "name": "Dark Reading",
+            "url": "https://www.darkreading.com/rss.xml",
+            "category": "news",
+            "note": "OK - 50 entries",
+            "trust_tier": 3
+          },
+          {
+            "name": "CyberScoop",
+            "url": "https://www.cyberscoop.com/feed/",
+            "category": "news",
+            "note": "OK - 10 entries",
+            "trust_tier": 3
+          },
+          {
+            "name": "SecurityWeek",
+            "url": "https://feeds.feedburner.com/Securityweek",
+            "category": "news",
+            "country_tag": "",
+            "note": "Direct RSS returned 403; using Feedburner endpoint which is referenced by sources",
+            "trust_tier": 3
+          },
+          {
+            "name": "The Register Security",
+            "url": "https://www.theregister.com/security/headlines.atom",
+            "category": "news",
+            "note": "OK - 50 entries",
+            "trust_tier": 3
+          },
+          {
+            "name": "Wired Security",
+            "url": "https://www.wired.com/feed/category/security/latest/rss",
+            "category": "news",
+            "note": "OK - 20 entries",
+            "trust_tier": 3
+          },
+          {
+            "name": "Graham Cluley Blog",
+            "url": "https://grahamcluley.com/feed/",
+            "category": "news",
+            "note": "OK - 20 entries",
+            "trust_tier": 3
+          },
+          {
+            "name": "Troy Hunt Blog",
+            "url": "https://www.troyhunt.com/rss/",
+            "category": "news",
+            "note": "OK - 15 entries",
+            "trust_tier": 3
+          },
+          {
+            "name": "Help Net Security",
+            "url": "https://www.helpnetsecurity.com/feed/",
+            "category": "news",
+            "note": "OK - 10 entries",
+            "trust_tier": 3
+          },
+          {
+            "name": "Infosecurity Magazine",
+            "url": "https://www.infosecurity-magazine.com/rss/news/",
+            "category": "news",
+            "note": "OK - 250 entries",
+            "trust_tier": 3
+          },
+          {
+            "name": "404 Media",
+            "url": "https://www.404media.co/rss",
+            "category": "news",
+            "note": "OK - 15 entries",
+            "trust_tier": 3
+          },
+          {
+            "name": "CyberWire Daily",
+            "url": "https://feeds.megaphone.fm/cyberwire-daily-podcast",
+            "category": "news",
+            "country_tag": "",
+            "note": "CyberWire moved to Megaphone hosting; old thecyberwire.com feed caused chardet noise",
+            "trust_tier": 3
+          },
+          {
+            "name": "Risky Business",
+            "url": "https://risky.biz/feeds/risky-business/",
+            "category": "news",
+            "note": "OK - 100 entries",
+            "trust_tier": 3
+          },
+          {
+            "name": "Cybersecurity Dive",
+            "url": "https://www.cybersecuritydive.com/feeds/news/",
+            "category": "news",
+            "note": "OK - 10 entries",
+            "trust_tier": 3
+          },
+          {
+            "name": "Tripwire State of Security",
+            "url": "https://feeds.feedburner.com/tripwire-state-of-security",
+            "category": "news",
+            "note": "Direct URL 403; using FeedBurner",
+            "trust_tier": 3
+          },
+          {
+            "name": "Ransomware.live Blog",
+            "url": "https://ransomware.live/rss.xml",
+            "category": "ransomware",
+            "note": "Old /feed.xml was 404; trying root rss.xml",
+            "trust_tier": 2
+          },
+          {
+            "name": "SOC Prime",
+            "url": "https://socprime.com/feed/",
+            "category": "detection",
+            "note": "OK - 10 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "Sigma HQ Releases",
+            "url": "https://github.com/SigmaHQ/sigma/releases.atom",
+            "category": "detection",
+            "note": "OK - 10 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "Florian Roth (cyb3rops)",
+            "url": "https://cyb3rops.medium.com/feed",
+            "category": "detection",
+            "note": "OK - 10 entries",
+            "trust_tier": 2
+          },
+          {
+            "name": "Cisco Talos Blog",
+            "url": "https://blog.talosintelligence.com/rss/",
+            "category": "research",
+            "country_tag": "",
+            "note": "Cisco Talos - correct current RSS path",
+            "trust_tier": 2
+          },
+          {
+            "name": "WithSecure Labs",
+            "url": "https://labs.withsecure.com/feed.xml",
+            "category": "research",
+            "country_tag": "",
+            "note": "labs.withsecure.com/publications/feed returned 404; trying /feed.xml",
+            "trust_tier": 2
+          },
+          {
+            "name": "SANS NewsBites",
+            "url": "https://www.sans.org/newsletters/newsbites/rss/",
+            "category": "news",
+            "country_tag": "",
+            "note": "SANS blog feed 404 -- replaced with SANS NewsBites newsletter RSS",
+            "trust_tier": 2
+          }
+        ]
+      },
+      "news": {
+        "label": "News",
+        "enabled": true,
+        "exclusion_categories": [
+          "sports",
+          "entertainment",
+          "celebrity",
+          "lifestyle",
+          "fashion",
+          "food",
+          "travel",
+          "horoscope",
+          "reality tv",
+          "music charts",
+          "box office"
+        ],
+        "clickbait_phrases": [
+          "you won't believe",
+          "you will not believe",
+          "shocking",
+          "mind-blowing",
+          "mind blowing",
+          "viral",
+          "goes viral",
+          "breaks the internet",
+          "the internet is losing it",
+          "everyone is talking about",
+          "here's why",
+          "this is why",
+          "the reason will",
+          "you need to know",
+          "everything you need",
+          "what you need to know about",
+          "blew our minds",
+          "can't stop laughing",
+          "we can't even",
+          "absolutely destroyed",
+          "totally savage",
+          "this one weird",
+          "doctors hate",
+          "one simple trick",
+          "changed forever",
+          "will change your life"
+        ],
+        "max_title_length": 120,
+        "min_summary_length": 30,
+        "feeds": [
+          {
+            "name": "ABC News Australia",
+            "url": "https://www.abc.net.au/news/feed/51120/rss.xml",
+            "country_tag": "AU",
+            "note": "National broadcaster -- high quality, no clickbait",
+            "trust_tier": 1
+          },
+          {
+            "name": "ABC Technology",
+            "url": "https://www.abc.net.au/news/feed/8288676/rss.xml",
+            "country_tag": "AU",
+            "note": "Old justin/ path 404; technology section feed ID 8288676",
+            "trust_tier": 3
+          },
+          {
+            "name": "The Guardian Australia",
+            "url": "https://www.theguardian.com/australia-news/rss",
+            "country_tag": "AU",
+            "note": "Quality investigative journalism",
+            "trust_tier": 1
+          },
+          {
+            "name": "The Conversation AU",
+            "url": "https://theconversation.com/au/articles.atom",
+            "country_tag": "AU",
+            "note": "Expert academic analysis -- very low clickbait risk",
+            "trust_tier": 2
+          },
+          {
+            "name": "SBS News",
+            "url": "https://www.sbs.com.au/news/feed",
+            "country_tag": "AU",
+            "note": "SBS public broadcaster",
+            "trust_tier": 1
+          },
+          {
+            "name": "Crikey",
+            "url": "https://www.crikey.com.au/feed/",
+            "country_tag": "AU",
+            "note": "Independent Australian political journalism",
+            "trust_tier": 3
+          },
+          {
+            "name": "BBC News",
+            "url": "https://feeds.bbci.co.uk/news/rss.xml",
+            "country_tag": "UK",
+            "note": "BBC global news -- high quality",
+            "trust_tier": 1
+          },
+          {
+            "name": "Associated Press",
+            "url": "https://apnews.com/rss",
+            "country_tag": "INT",
+            "note": "rsshub.app returned 403; using AP direct RSS endpoint",
+            "trust_tier": 3
+          },
+          {
+            "name": "Sydney Morning Herald - Technology",
+            "url": "https://www.smh.com.au/rss/technology.xml",
+            "note": "Major AU masthead tech section",
+            "trust_tier": 3
+          },
+          {
+            "name": "The Australian Financial Review - Technology",
+            "url": "https://www.afr.com/rss/technology",
+            "note": "Generic /rss 404; trying technology-specific path",
+            "trust_tier": 3
+          },
+          {
+            "name": "ZDNet Australia",
+            "url": "https://www.zdnet.com/topic/security/rss.xml",
+            "note": "AU-relevant ZDNet security feed",
+            "trust_tier": 3
+          },
+          {
+            "name": "iTnews",
+            "url": "https://www.itnews.com.au/rss/news",
+            "note": "Root RSS path had XML syntax error; trying /rss/news endpoint",
+            "trust_tier": 3
+          },
+          {
+            "name": "InnovationAus",
+            "url": "https://www.innovationaus.com/feed/",
+            "note": "AU tech policy and innovation -- good for regulatory news",
+            "trust_tier": 3
+          },
+          {
+            "name": "Lawfare Blog",
+            "url": "https://www.lawfaremedia.org/feed",
+            "note": "HTTP 403 on current URL -- trying main feed endpoint",
+            "trust_tier": 3
+          },
+          {
+            "name": "The Record by Recorded Future",
+            "url": "https://therecord.media/feed",
+            "note": "Dedicated cybersecurity journalism -- incidents, policy, threat actors",
+            "trust_tier": 2
+          },
+          {
+            "name": "Cyberscoop News",
+            "url": "https://cyberscoop.com/feed/",
+            "note": "US cyber policy and government cybersecurity focus",
+            "trust_tier": 2
+          },
+          {
+            "name": "MIT Technology Review",
+            "url": "https://www.technologyreview.com/feed/",
+            "note": "Deep tech and policy -- AI, surveillance, geopolitics",
+            "trust_tier": 3
+          },
+          {
+            "name": "Politico Tech",
+            "url": "https://rss.politico.com/politics-news.xml",
+            "note": "Tech-specific feed 404; using politics feed which covers tech policy",
+            "trust_tier": 3
+          },
+          {
+            "name": "Financial Times - Technology",
+            "url": "https://www.ft.com/technology?format=rss",
+            "note": "Global tech and business with strong geopolitics coverage",
+            "trust_tier": 3
+          },
+          {
+            "name": "The Guardian - Technology",
+            "url": "https://www.theguardian.com/technology/rss",
+            "note": "Global tech, privacy, AI, regulation",
+            "trust_tier": 3
+          },
+          {
+            "name": "Al Jazeera - Technology",
+            "url": "https://www.aljazeera.com/xml/rss/all.xml",
+            "note": "Global news -- non-Western perspective on geopolitics",
+            "trust_tier": 3
+          },
+          {
+            "name": "New York Times - Technology",
+            "url": "https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml",
+            "note": "Major US paper -- tech and national security coverage",
+            "trust_tier": 3
+          },
+          {
+            "name": "Washington Post - Technology",
+            "url": "https://feeds.washingtonpost.com/rss/business/technology",
+            "note": "Timeout may be network-related; keeping current URL which is the official feed path",
+            "trust_tier": 3
+          },
+          {
+            "name": "Techcrunch - Security",
+            "url": "https://techcrunch.com/category/security/feed/",
+            "note": "Breaking tech/startup security news",
+            "trust_tier": 3
+          },
+          {
+            "name": "Rest of World",
+            "url": "https://restofworld.org/feed/latest",
+            "note": "Global tech outside US/EU -- good for APAC and emerging market context",
+            "trust_tier": 3
+          },
+          {
+            "name": "Sophos News",
+            "url": "https://news.sophos.com/en-us/feed/",
+            "category": "",
+            "country_tag": "",
+            "note": "Naked Security shut down; replaced with news.sophos.com main feed",
+            "trust_tier": 3
+          },
+          {
+            "name": "The Conversation - Technology",
+            "url": "https://theconversation.com/technology/articles.atom",
+            "category": "",
+            "country_tag": "",
+            "note": "Vice defunct; replaced with The Conversation Technology section",
+            "trust_tier": 3
+          }
+        ],
+        "keywords": {
+          "ransomware": 6,
+          "zero-day": 6,
+          "actively exploited": 6,
+          "nation state": 5,
+          "critical infrastructure": 5,
+          "data breach": 5,
+          "cyber attack": 4,
+          "cyberattack": 4,
+          "espionage": 4,
+          "state-sponsored": 4,
+          "malware": 4,
+          "vulnerability": 3,
+          "exploit": 3,
+          "sanctions": 3,
+          "indictment": 3,
+          "arrested": 3,
+          "hack": 3,
+          "hacked": 3,
+          "breach": 3,
+          "phishing": 3,
+          "legislation": 2,
+          "regulation": 2,
+          "privacy": 2,
+          "surveillance": 2,
+          "disinformation": 2,
+          "election": 2,
+          "interference": 3,
+          "intelligence": 2,
+          "AFP": 2,
+          "ASD": 3,
+          "ACSC": 3,
+          "ASIO": 3,
+          "parliament": 2,
+          "government": 1,
+          "federal": 1,
+          "australia": 1,
+          "australian": 1,
+          "ai": 1,
+          "artificial intelligence": 2,
+          "geopolitical": 2,
+          "china": 2,
+          "russia": 2,
+          "iran": 2,
+          "north korea": 2
+        },
+        "news_categories": [
+          {
+            "category": "incident",
+            "keywords": [
+              "breach",
+              "hack",
+              "hacked",
+              "ransomware",
+              "data leak",
+              "cyberattack",
+              "cyber attack",
+              "intrusion",
+              "compromise",
+              "exfiltration",
+              "extortion",
+              "victim",
+              "encrypted",
+              "wiped",
+              "disrupted",
+              "outage caused by"
+            ],
+            "note": "Confirmed or reported security incidents"
+          },
+          {
+            "category": "vulnerability",
+            "keywords": [
+              "zero-day",
+              "cve-",
+              "vulnerability",
+              "exploit",
+              "patch tuesday",
+              "remote code execution",
+              "rce",
+              "privilege escalation",
+              "injection",
+              "actively exploited",
+              "proof of concept",
+              "poc released"
+            ],
+            "note": "Vulnerability disclosures and patch news"
+          },
+          {
+            "category": "threat-actor",
+            "keywords": [
+              "apt",
+              "threat actor",
+              "nation state",
+              "state-sponsored",
+              "espionage",
+              "indicted",
+              "arrested",
+              "charged",
+              "sanctions",
+              "attributed",
+              "china",
+              "russia",
+              "iran",
+              "north korea",
+              "lazarus",
+              "volt typhoon",
+              "salt typhoon",
+              "fancy bear",
+              "cozy bear"
+            ],
+            "note": "Threat actor activity, attribution, law enforcement action"
+          },
+          {
+            "category": "policy",
+            "keywords": [
+              "legislation",
+              "regulation",
+              "bill",
+              "act",
+              "law",
+              "compliance",
+              "mandatory",
+              "framework",
+              "parliament",
+              "senate",
+              "congress",
+              "directive",
+              "gdpr",
+              "privacy act",
+              "essential eight",
+              "nist",
+              "iso 27001",
+              "nis2"
+            ],
+            "note": "Cybersecurity policy, legislation, regulatory developments"
+          },
+          {
+            "category": "ai",
+            "keywords": [
+              "artificial intelligence",
+              "machine learning",
+              "llm",
+              "large language model",
+              "deepfake",
+              "generative ai",
+              "chatgpt",
+              "claude",
+              "gpt",
+              "ai-generated",
+              "ai model",
+              "ai safety"
+            ],
+            "note": "AI and its intersection with security and policy"
+          },
+          {
+            "category": "geopolitical",
+            "keywords": [
+              "geopolit",
+              "trade war",
+              "tariff",
+              "sanctions",
+              "diplomacy",
+              "conflict",
+              "war",
+              "military",
+              "defence",
+              "foreign interference",
+              "disinformation",
+              "influence operation",
+              "election"
+            ],
+            "note": "Geopolitical developments with security implications"
+          },
+          {
+            "category": "industry",
+            "keywords": [
+              "acquisition",
+              "merger",
+              "ipo",
+              "funding",
+              "layoff",
+              "executive",
+              "ceo",
+              "ciso",
+              "revenue",
+              "quarterly",
+              "market share"
+            ],
+            "note": "Security industry business news"
+          }
+        ]
+      },
+      "government": {
+        "label": "Government & Regulatory",
+        "enabled": true,
+        "keywords": [
+          "advisory",
+          "vulnerability",
+          "patch",
+          "critical",
+          "exploit",
+          "ransomware",
+          "nation state",
+          "apt",
+          "espionage",
+          "sanctions",
+          "legislation",
+          "regulation",
+          "compliance",
+          "incident",
+          "breach",
+          "cyber",
+          "malware",
+          "phishing",
+          "zero day",
+          "cve"
+        ],
+        "feeds": [
+          {
+            "name": "ACSC Alerts",
+            "url": "https://www.cyber.gov.au/rss/alerts",
+            "country_tag": "AU",
+            "note": "ASD/ACSC alerts - confirmed working URL from cyber.gov.au",
+            "trust_tier": 1
+          },
+          {
+            "name": "ACSC Advisories",
+            "url": "https://www.cyber.gov.au/rss/advisories",
+            "country_tag": "AU",
+            "note": "ASD/ACSC advisories - confirmed working URL",
+            "trust_tier": 1
+          },
+          {
+            "name": "ACSC News",
+            "url": "https://www.cyber.gov.au/rss/news",
+            "country_tag": "AU",
+            "note": "cyber.gov.au news feed",
+            "trust_tier": 1
+          },
+          {
+            "name": "NCSC UK Alerts & Advisories",
+            "url": "https://www.ncsc.gov.uk/api/1/services/v1/news-rss-feed.xml",
+            "country_tag": "UK",
+            "note": "NCSC UK news feed - confirmed working from ncsc.gov.uk",
+            "trust_tier": 1
+          },
+          {
+            "name": "NCSC UK Reports",
+            "url": "https://www.ncsc.gov.uk/api/1/services/v1/report-rss-feed.xml",
+            "country_tag": "UK",
+            "note": "NCSC UK technical reports - confirmed working",
+            "trust_tier": 1
+          },
+          {
+            "name": "CISA Blog & Alerts",
+            "url": "https://www.cisa.gov/cisa/blog.xml",
+            "country_tag": "US",
+            "note": "Main advisory RSS discontinued (403). CISA blog RSS still operational.",
+            "trust_tier": 1
+          },
+          {
+            "name": "CISA News & Events",
+            "url": "https://www.cisa.gov/news.xml",
+            "country_tag": "US",
+            "note": "ICS advisory RSS discontinued (403). Using CISA news feed as replacement.",
+            "trust_tier": 1
+          },
+          {
+            "name": "CISA StopRansomware",
+            "url": "https://www.cisa.gov/stopransomware/feed",
+            "country_tag": "US",
+            "note": "US-CERT RSS dead (403). Using StopRansomware.gov feed from CISA.",
+            "trust_tier": 1
+          },
+          {
+            "name": "NCSC New Zealand Alerts",
+            "url": "https://www.ncsc.govt.nz/alerts/feed/",
+            "country_tag": "NZ",
+            "note": "CERT NZ merged into NCSC NZ (2023). Old cert.govt.nz path dead; using ncsc.govt.nz/alerts/feed/",
+            "trust_tier": 1
+          },
+          {
+            "name": "CCCS Alerts (Canada)",
+            "url": "https://cyber.gc.ca/api/cccs/rss/v1/get?feed=alerts_advisories&lang=en",
+            "country_tag": "CA",
+            "note": "Old /en/rss/cyber.xml path 404. New API-based RSS confirmed from CCCS site.",
+            "trust_tier": 1
+          },
+          {
+            "name": "ENISA News",
+            "url": "https://www.enisa.europa.eu/media/news-items/news-wires/RSS",
+            "country_tag": "EU",
+            "note": "ENISA RSS discontinued on new website. Old Plone path may still work intermittently. Disabled.",
+            "enabled": false,
+            "trust_tier": 1
+          },
+          {
+            "name": "Europol Cybercrime",
+            "url": "https://www.europol.europa.eu/cms/api/rss/news",
+            "country_tag": "EU",
+            "note": "newsroom/rss returned 404; correct URL is /cms/api/rss/news (confirmed from search results)",
+            "trust_tier": 1
+          },
+          {
+            "name": "CISA KEV Catalog (GitHub)",
+            "url": "https://github.com/cisagov/kev-data/commits/main.atom",
+            "category": "",
+            "country_tag": "US",
+            "note": "CISA Known Exploited Vulnerabilities via official cisagov GitHub mirror -- updated same time as cisa.gov/kev",
+            "trust_tier": 1
+          },
+          {
+            "name": "CCCS Guidance (Canada)",
+            "url": "https://cyber.gc.ca/api/cccs/rss/v1/get?feed=guidance&lang=en",
+            "category": "",
+            "country_tag": "CA",
+            "note": "CCCS guidance, news and events RSS -- separate from alerts feed",
+            "trust_tier": 1
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,48 @@
+name: Prism Hourly Fetch
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:          # allow manual trigger
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write          # needed to push data files back to the repo
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install feedparser requests keyring keyrings.alt
+
+      - name: Write OTX key to keyring
+        env:
+          OTX_KEY: ${{ secrets.OTX_API_KEY }}
+        run: |
+          python - <<'EOF'
+          import keyring, os
+          key = os.environ.get('OTX_KEY', '')
+          if key:
+              keyring.set_password('prism', 'otx', key)
+              print('OTX key stored')
+          else:
+              print('OTX key not configured -- skipping')
+          EOF
+
+      - name: Run Prism
+        run: python prism.py --output data-json
+
+      - name: Commit and push data files
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/
+          git diff --staged --quiet || git commit -m "data: $(date -u +%Y-%m-%d) automated fetch"
+          git push

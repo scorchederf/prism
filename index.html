@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prism -- Intelligence Digest</title>
+<style>
+:root {
+  --bg:       #0c0e13;
+  --sidebar:  #090b0f;
+  --surface:  #111520;
+  --surface2: #161b28;
+  --border:   #1a2035;
+  --border2:  #222840;
+  --text:     #b0bcd8;
+  --muted:    #404868;
+  --bright:   #dce6ff;
+  --accent:   #4f8eff;
+  --green:    #22cc88;
+  --red:      #ff4466;
+  --orange:   #ff9944;
+  --yellow:   #ffcc44;
+  --trend:    #ffaa00;
+  --sans:     'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --mono:     'Courier New', Courier, monospace;
+  --sidebar-w: 248px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 13px; line-height: 1.5; display: flex; min-height: 100vh; }
+aside {
+  width: var(--sidebar-w); min-width: var(--sidebar-w); background: var(--sidebar);
+  border-right: 1px solid var(--border); display: flex; flex-direction: column;
+  position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  scrollbar-width: thin; scrollbar-color: var(--border2) transparent;
+}
+.sidebar-logo { padding: 18px 16px 14px; border-bottom: 1px solid var(--border); }
+.logo-text { font-size: 20px; font-weight: 800; letter-spacing: 0.14em; color: var(--bright); }
+.logo-text span { color: var(--accent); }
+.logo-date { font-family: var(--mono); font-size: 9px; color: var(--muted); letter-spacing: 0.07em; margin-top: 4px; }
+.sidebar-date { padding: 10px 16px; border-bottom: 1px solid var(--border); }
+.date-label { font-size: 9px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+.date-row { display: flex; align-items: center; gap: 6px; }
+#date-select { flex: 1; background: var(--surface); border: 1px solid var(--border2); color: var(--text); padding: 4px 7px; font-family: var(--mono); font-size: 10px; border-radius: 3px; cursor: pointer; }
+#date-select:focus { outline: none; border-color: var(--accent); }
+.date-nav { background: none; border: 1px solid var(--border2); color: var(--muted); cursor: pointer; padding: 3px 7px; border-radius: 3px; font-size: 12px; transition: color 0.12s, border-color 0.12s; }
+.date-nav:hover:not(:disabled) { color: var(--accent); border-color: var(--accent); }
+.date-nav:disabled { opacity: 0.3; cursor: default; }
+.date-history-note { font-family: var(--mono); font-size: 9px; color: var(--muted); margin-top: 4px; }
+.sidebar-stats { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.s-label { font-size: 9px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
+.stat-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 7px; margin: 2px -7px; border-radius: 4px; cursor: pointer; border: 1px solid transparent; transition: background 0.12s, border-color 0.12s; user-select: none; }
+.stat-row:hover, .stat-row.active { background: var(--surface); border-color: var(--border2); }
+.stat-name { font-size: 11px; color: var(--muted); }
+.stat-row:hover .stat-name, .stat-row.active .stat-name { color: var(--text); }
+.stat-val { font-family: var(--mono); font-size: 15px; font-weight: 700; }
+.v-all    { color: var(--bright); }
+.v-crit   { color: var(--red); }
+.v-high   { color: var(--orange); }
+.v-cve    { color: #8899ff; }
+.v-ransom { color: #ff66aa; }
+.v-trend  { color: var(--trend); }
+.sidebar-nav { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.nav-label { font-size: 9px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
+.nav-item { display: flex; justify-content: space-between; align-items: center; padding: 5px 8px; margin-bottom: 2px; border-radius: 4px; cursor: pointer; border: 1px solid transparent; transition: background 0.12s, border-color 0.12s; user-select: none; }
+.nav-item:hover, .nav-item.active { background: var(--surface); border-color: var(--border2); }
+.nav-item span { font-size: 11px; color: var(--text); }
+.nav-item em { font-family: var(--mono); font-size: 10px; color: var(--muted); font-style: normal; }
+.sidebar-filters { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.filter-label { font-size: 9px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
+.filter-block { margin-bottom: 9px; }
+.filter-block label { font-size: 10px; color: var(--muted); display: block; margin-bottom: 3px; }
+select, input[type=text] { width: 100%; background: var(--surface); border: 1px solid var(--border2); color: var(--text); padding: 5px 8px; font-family: var(--sans); font-size: 11px; border-radius: 3px; }
+select:focus, input:focus { outline: none; border-color: var(--accent); }
+.filter-active-label { font-family: var(--mono); font-size: 9px; color: var(--accent); padding: 2px 0; display: none; }
+.filter-active-label.visible { display: block; }
+.clear-btn { font-size: 10px; color: var(--muted); cursor: pointer; padding: 2px 0; display: inline-block; margin-top: 4px; }
+.clear-btn:hover { color: var(--accent); }
+.sidebar-sources { padding: 12px 16px; flex: 1; }
+.sources-label { font-size: 9px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
+.source-link-list { display: flex; flex-direction: column; gap: 2px; }
+.source-link { font-size: 10px; color: var(--muted); text-decoration: none; padding: 2px 4px; border-radius: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color 0.12s, background 0.12s; }
+.source-link:hover { color: var(--accent); background: var(--surface); }
+.source-link-more { font-size: 10px; color: var(--muted); padding: 2px 4px; cursor: pointer; }
+.source-link-more:hover { color: var(--text); }
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.topbar { padding: 11px 22px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 14px; flex-wrap: wrap; position: sticky; top: 0; z-index: 10; }
+.topbar-title { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; color: var(--bright); text-transform: uppercase; }
+.topbar-sub { font-size: 10px; color: var(--muted); }
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.topbar-right input { width: 210px; background: var(--bg); border: 1px solid var(--border2); color: var(--text); padding: 4px 10px; font-size: 11px; border-radius: 3px; }
+.topbar-right input:focus { outline: none; border-color: var(--accent); }
+#item-count { font-family: var(--mono); font-size: 10px; color: var(--muted); white-space: nowrap; }
+.state-msg { display: flex; align-items: center; justify-content: center; flex: 1; flex-direction: column; gap: 10px; color: var(--muted); font-family: var(--mono); font-size: 12px; }
+.state-msg.error { color: var(--red); }
+.spinner { width: 28px; height: 28px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.content { padding: 18px 22px; }
+.section-divider { display: flex; align-items: center; gap: 12px; margin: 22px 0 12px; }
+.section-divider:first-child { margin-top: 0; }
+.section-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.section-divider-label { font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.section-divider-count { font-family: var(--mono); font-size: 10px; color: var(--muted); background: var(--surface); border: 1px solid var(--border); padding: 1px 7px; border-radius: 2px; }
+.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 10px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 5px; overflow: hidden; transition: border-color 0.15s, opacity 0.45s, filter 0.45s; will-change: opacity, filter; }
+.card:hover { border-color: var(--border2); }
+.card.trending-card { border-color: #ffaa0030; }
+.card.trending-card:hover { border-color: #ffaa0060; }
+.card.out-of-focus { opacity: 0.25; filter: saturate(0.08); }
+.card.out-of-focus:hover { opacity: 1; filter: saturate(1); }
+.card.keep-bright { opacity: 1 !important; filter: none !important; }
+.card-head { padding: 10px 13px 7px; }
+/* card-head-link: wraps the entire card header as a block link to the article.
+   Child interactive elements (badges, src-name) retain their own pointer events. */
+a.card-head-link {
+  display: block; padding: 10px 13px 7px; text-decoration: none; color: inherit;
+  cursor: pointer;
+}
+a.card-head-link:hover .card-title { color: var(--accent); }
+a.card-head-link:hover { background: #ffffff06; }
+.card-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 5px; }
+.cat-badge { font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 1px 6px; border-radius: 2px; cursor: pointer; transition: opacity 0.12s; }
+.cat-badge:hover { opacity: 0.7; }
+/* Fallback indicator -- shown when card links to homepage rather than article */
+.fallback-badge { font-size: 10px; color: var(--muted); opacity: 0.6; cursor: default;
+  padding: 0 3px; line-height: 1; flex-shrink: 0; }
+.trend-badge { font-size: 9px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; padding: 1px 6px; border-radius: 2px; background: #ffaa0018; color: var(--trend); border: 1px solid #ffaa0035; white-space: nowrap; }
+.country-tag { font-family: var(--mono); font-size: 9px; color: var(--muted); background: var(--surface2); border: 1px solid var(--border); padding: 0 4px; border-radius: 2px; cursor: pointer; }
+.country-tag:hover { color: var(--accent); }
+.src-name { font-size: 10px; color: var(--muted); text-decoration: none; transition: color 0.12s; cursor: pointer; }
+.src-name:hover { color: var(--accent); }
+.item-date { font-family: var(--mono); font-size: 9px; color: var(--muted); margin-left: auto; }
+.score-badge { font-family: var(--mono); font-size: 9px; font-weight: 700; padding: 1px 7px; border-radius: 2px; cursor: pointer; }
+.sev-critical { background: #ff446618; color: var(--red);    border: 1px solid #ff446630; }
+.sev-high     { background: #ff994418; color: var(--orange); border: 1px solid #ff994430; }
+.sev-medium   { background: #ffcc4415; color: var(--yellow); border: 1px solid #ffcc4428; }
+.sev-low      { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); cursor: default; }
+.sev-critical:hover, .sev-high:hover, .sev-medium:hover { opacity: 0.75; }
+.card-title { font-size: 13px; font-weight: 600; color: var(--bright); line-height: 1.4; display: block; }
+.card-body { border-top: 1px solid var(--border); padding: 7px 13px 9px; background: var(--surface2); }
+.corr-banner { font-size: 10px; color: var(--yellow); background: #ffcc4410; border-left: 2px solid var(--yellow); padding: 3px 7px; margin-bottom: 6px; }
+.trend-banner { font-size: 10px; color: var(--trend); background: #ffaa0010; border-left: 2px solid var(--trend); padding: 3px 7px; margin-bottom: 6px; }
+.card-summary { font-size: 11px; color: #5a6890; line-height: 1.55; margin-bottom: 6px; }
+.tag-row { display: flex; flex-wrap: wrap; gap: 4px; }
+.cve-tag,.cve-c { font-family: var(--mono); font-size: 9px; background: #3344aa15; color: #6688cc; border: 1px solid #3344aa28; padding: 1px 5px; border-radius: 2px; cursor: pointer; transition: background 0.12s; }
+.cve-c { font-weight: 700; background: #3344aa25; border-color: #3344aa45; }
+.cve-tag:hover,.cve-c:hover { background: #3344aa35; }
+.kw-tag { font-family: var(--mono); font-size: 9px; background: #22885515; color: var(--green); border: 1px solid #22885525; padding: 1px 5px; border-radius: 2px; cursor: pointer; transition: background 0.12s; }
+.kw-tag:hover { background: #22885530; }
+
+/* ---- Per-card source dropdown ---- */
+.card-sources { margin-top: 7px; border-top: 1px solid var(--border); padding-top: 6px; }
+details.src-drop { font-size: 10px; }
+details.src-drop summary {
+  color: var(--muted); cursor: pointer; list-style: none; display: flex;
+  align-items: center; gap: 5px; padding: 2px 0; user-select: none;
+  transition: color 0.12s;
+}
+details.src-drop summary::-webkit-details-marker { display: none; }
+details.src-drop summary::before {
+  content: '\25B6'; font-size: 7px; transition: transform 0.15s; display: inline-block;
+}
+details.src-drop[open] summary::before { transform: rotate(90deg); }
+details.src-drop summary:hover { color: var(--text); }
+.src-drop-list { margin-top: 5px; display: flex; flex-direction: column; gap: 3px; }
+.src-drop-item {
+  display: flex; align-items: baseline; gap: 6px; padding: 3px 6px;
+  border-radius: 3px; background: var(--surface); border: 1px solid var(--border);
+  transition: border-color 0.12s;
+}
+.src-drop-item:hover { border-color: var(--border2); }
+.src-tier { font-family: var(--mono); font-size: 8px; color: var(--muted);
+  background: var(--surface2); border: 1px solid var(--border); padding: 0 3px;
+  border-radius: 2px; white-space: nowrap; flex-shrink: 0; }
+.src-tier-1 { color: var(--green); border-color: #22885530; }
+.src-tier-2 { color: var(--accent); border-color: #4f8eff30; }
+.src-tier-3 { color: var(--muted); }
+.src-tier-4 { color: var(--muted); opacity: 0.7; }
+.src-drop-link { font-size: 10px; color: var(--text); text-decoration: none;
+  flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.src-drop-link:hover { color: var(--accent); text-decoration: underline; }
+.src-drop-score { font-family: var(--mono); font-size: 9px; color: var(--muted); flex-shrink: 0; }
+footer { padding: 9px 22px; border-top: 1px solid var(--border); font-size: 10px; color: var(--muted); font-family: var(--mono); letter-spacing: 0.06em; background: var(--surface); }
+.hidden { display: none !important; }
+@media (max-width: 720px) { aside { display: none; } .card-grid { grid-template-columns: 1fr; } .content { padding: 12px 14px; } .topbar-right input { width: 130px; } }
+</style>
+</head>
+<body>
+<aside>
+  <div class="sidebar-logo">
+    <div class="logo-text">PR<span>ISM</span></div>
+    <div class="logo-date" id="logo-date">Loading...</div>
+  </div>
+  <div class="sidebar-date">
+    <div class="date-label">Date</div>
+    <div class="date-row">
+      <button class="date-nav" id="btn-prev" onclick="shiftDate(-1)" title="Previous day" disabled>&lt;</button>
+      <select id="date-select" onchange="onDateChange()"></select>
+      <button class="date-nav" id="btn-next" onclick="shiftDate(1)" title="Next day" disabled>&gt;</button>
+    </div>
+    <div class="date-history-note" id="date-history-note"></div>
+  </div>
+  <div class="sidebar-stats">
+    <div class="s-label">Summary</div>
+    <div class="stat-row active" id="stat-all" onclick="filterByStat('all')" title="Show all items">
+      <span class="stat-name">All items</span><span class="stat-val v-all" id="sv-all">--</span>
+    </div>
+    <div class="stat-row" id="stat-critical" onclick="filterByStat('critical')">
+      <span class="stat-name">Critical</span><span class="stat-val v-crit" id="sv-critical">--</span>
+    </div>
+    <div class="stat-row" id="stat-high" onclick="filterByStat('high')">
+      <span class="stat-name">High</span><span class="stat-val v-high" id="sv-high">--</span>
+    </div>
+    <div class="stat-row" id="stat-cve" onclick="filterByStat('cve')">
+      <span class="stat-name">CVEs</span><span class="stat-val v-cve" id="sv-cve">--</span>
+    </div>
+    <div class="stat-row" id="stat-ransomware" onclick="filterByStat('ransomware')">
+      <span class="stat-name">Ransomware</span><span class="stat-val v-ransom" id="sv-ransomware">--</span>
+    </div>
+    <div class="stat-row" id="stat-trending" onclick="filterByStat('trending')" title="Topics active 2+ consecutive days">
+      <span class="stat-name">Trending</span><span class="stat-val v-trend" id="sv-trending">--</span>
+    </div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-label">Groups</div>
+    <div class="nav-item active" onclick="jumpGroup('all',this)"><span>All groups</span><em id="nc-all">--</em></div>
+    <div class="nav-item" onclick="jumpGroup('threat_intel',this)"><span>Threat Intel</span><em id="nc-threat_intel">--</em></div>
+    <div class="nav-item" onclick="jumpGroup('news',this)"><span>News</span><em id="nc-news">--</em></div>
+    <div class="nav-item" onclick="jumpGroup('government',this)"><span>Government</span><em id="nc-government">--</em></div>
+  </div>
+  <div class="sidebar-filters">
+    <div class="filter-label">Filters</div>
+    <div class="filter-block">
+      <label>Category</label>
+      <select id="f-cat" onchange="applyFilters()">
+        <option value="all">All categories</option>
+        <optgroup label="Threat Intel">
+          <option value="advisory">Advisory</option>
+          <option value="research">Research</option>
+          <option value="exploit">Exploit / PoC</option>
+          <option value="intel">Intel</option>
+          <option value="vendor">Vendor</option>
+          <option value="detection">Detection</option>
+          <option value="ransomware">Ransomware</option>
+          <option value="ioc">IOC</option>
+        </optgroup>
+        <optgroup label="News">
+          <option value="incident">Incident</option>
+          <option value="vulnerability">Vulnerability</option>
+          <option value="threat-actor">Threat Actor</option>
+          <option value="policy">Policy / Regulation</option>
+          <option value="ai">AI</option>
+          <option value="geopolitical">Geopolitical</option>
+          <option value="industry">Industry</option>
+          <option value="news">News (general)</option>
+        </optgroup>
+        <optgroup label="Government">
+          <option value="government">Government</option>
+        </optgroup>
+      </select>
+    </div>
+    <div class="filter-block">
+      <label>Country</label>
+      <select id="f-country" onchange="applyFilters()">
+        <option value="all">All countries</option>
+        <option value="AU">Australia</option>
+        <option value="US">United States</option>
+        <option value="UK">United Kingdom</option>
+        <option value="NZ">New Zealand</option>
+        <option value="CA">Canada</option>
+        <option value="EU">European Union</option>
+        <option value="INT">International</option>
+      </select>
+    </div>
+    <div class="filter-block">
+      <label>Severity</label>
+      <select id="f-sev" onchange="applyFilters()">
+        <option value="0">All severity</option>
+        <option value="10">Critical only</option>
+        <option value="5">High and above</option>
+        <option value="2">Medium and above</option>
+      </select>
+    </div>
+    <div class="filter-active-label" id="active-label"></div>
+    <span class="clear-btn" onclick="clearFilters()">Clear all filters</span>
+  </div>
+  <div class="sidebar-sources">
+    <div class="sources-label">Sources</div>
+    <div class="source-link-list" id="source-list"></div>
+  </div>
+</aside>
+
+<div class="main" id="main">
+  <div class="state-msg" id="state-loading"><div class="spinner"></div><span>Loading...</span></div>
+  <div class="state-msg error hidden" id="state-error">
+    <span id="state-error-msg">Failed to load data</span>
+    <span style="font-size:10px;margin-top:4px;color:var(--muted)">Serve from a web server, not file://</span>
+  </div>
+  <div class="topbar hidden" id="topbar">
+    <div><div class="topbar-title">Intelligence Digest</div><div class="topbar-sub" id="topbar-sub"></div></div>
+    <div class="topbar-right">
+      <input type="text" id="f-text" placeholder="search / CVE / keyword..." oninput="applyFilters()">
+      <span id="item-count">-- items</span>
+    </div>
+  </div>
+  <div class="content hidden" id="content">
+    <div class="section-divider" id="sec-threat_intel">
+      <span class="section-divider-label">Threat Intelligence</span>
+      <span class="section-divider-count" id="dc-threat_intel">0</span>
+    </div>
+    <div class="card-grid" id="group-threat_intel"></div>
+    <div class="section-divider" id="sec-news">
+      <span class="section-divider-label">News</span>
+      <span class="section-divider-count" id="dc-news">0</span>
+    </div>
+    <div class="card-grid" id="group-news"></div>
+    <div class="section-divider" id="sec-government">
+      <span class="section-divider-label">Government &amp; Regulatory</span>
+      <span class="section-divider-count" id="dc-government">0</span>
+    </div>
+    <div class="card-grid" id="group-government"></div>
+  </div>
+  <footer class="hidden" id="footer">PRISM &nbsp;|&nbsp; <span id="footer-ts"></span> UTC &nbsp;|&nbsp; PUBLIC FEED</footer>
+</div>
+
+<script>
+'use strict';
+var CAT_COLOURS = {
+  advisory:'#e63946', exploit:'#ff6b35', research:'#4361ee', intel:'#7209b7',
+  vendor:'#3a86ff', detection:'#06d6a0', ransomware:'#f72585', news:'#adb5bd',
+  government:'#f4a261', ioc:'#9d4edd', incident:'#e63946', vulnerability:'#ff6b35',
+  'threat-actor':'#7209b7', policy:'#f4a261', ai:'#00b4d8', geopolitical:'#e9c46a',
+  industry:'#adb5bd'
+};
+var INDEX_URL   = 'data/index.json';
+var GROUP_ORDER = ['threat_intel','news','government'];
+var S = { sev:0, cat:'all', country:'all', text:'', group:'all', statKey:'all' };
+var DATES   = [];
+var CUR_DATE = '';
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function sev(score) {
+  if (score>=10) return {cls:'sev-critical',label:'CRITICAL',t:'10'};
+  if (score>=5)  return {cls:'sev-high',    label:'HIGH',    t:'5' };
+  if (score>=2)  return {cls:'sev-medium',  label:'MEDIUM',  t:'2' };
+  return              {cls:'sev-low',    label:'LOW',    t:''  };
+}
+function origin(url) {
+  if (!url||url.indexOf('https://')!==0) return '';
+  return url.split('/').slice(0,3).join('/');
+}
+
+// ---------------------------------------------------------------------------
+// SOURCE DROPDOWN -- shows all items sharing keywords/CVEs with this card,
+// sorted by trust tier (1=authoritative first), then score descending.
+// Displayed as a <details> element at the bottom of each card body.
+// ---------------------------------------------------------------------------
+var TIER_LABELS = { 1:'T1 Primary', 2:'T2 Research', 3:'T3 Blog', 4:'T4 News' };
+
+function buildSourceDropdown(item, allItems) {
+  // Collect this item's signals: matched keywords + CVEs (uppercased)
+  var signals = {};
+  (item.matched || []).forEach(function(k) { if (k) signals[k.toLowerCase()] = true; });
+  (item.cves    || []).forEach(function(c) { if (c) signals[c.toUpperCase()]  = true; });
+  if (!Object.keys(signals).length) return '';
+
+  // Find other items that share at least one signal, excluding self
+  var related = [];
+  allItems.forEach(function(other) {
+    if (other.hash === item.hash) return;  // skip self
+    var otherKws = (other.matched || []).map(function(k){ return k.toLowerCase(); });
+    var otherCves= (other.cves    || []).map(function(c){ return c.toUpperCase();  });
+    var allOther = otherKws.concat(otherCves);
+    var shared = allOther.filter(function(s){ return signals[s]; });
+    if (!shared.length) return;
+    var otherUrl = other.article_url || other.url || '';
+    if (!otherUrl || otherUrl.indexOf('https://') !== 0) return;
+    related.push({
+      source:      other.source      || '',
+      source_tier: parseInt(other.source_tier, 10) || 3,
+      title:       other.title       || 'No title',
+      url:         otherUrl,
+      score:       parseInt(other.score, 10) || 0,
+      shared:      shared.slice(0, 3),
+    });
+  });
+
+  if (!related.length) return '';
+
+  // Sort: tier asc (1 first), then score desc
+  related.sort(function(a, b) {
+    if (a.source_tier !== b.source_tier) return a.source_tier - b.source_tier;
+    return b.score - a.score;
+  });
+
+  // Cap at 8 related items
+  related = related.slice(0, 8);
+
+  var rows = related.map(function(r) {
+    var tierLabel = TIER_LABELS[r.source_tier] || 'T3 Blog';
+    var tierCls   = 'src-tier src-tier-' + r.source_tier;
+    return '<div class="src-drop-item">'
+      + '<span class="' + tierCls + '">' + esc(tierLabel) + '</span>'
+      + '<a class="src-drop-link" href="' + esc(r.url) + '" target="_blank" rel="noopener noreferrer"'
+      + ' title="' + esc(r.source + ': ' + r.title) + '">'
+      + esc(r.source) + ' &mdash; ' + esc(r.title.slice(0, 60)) + (r.title.length > 60 ? '...' : '')
+      + '</a>'
+      + '<span class="src-drop-score">' + r.score + '</span>'
+      + '</div>';
+  }).join('');
+
+  return '<div class="card-sources">'
+    + '<details class="src-drop">'
+    + '<summary>' + related.length + ' related source' + (related.length !== 1 ? 's' : '') + '</summary>'
+    + '<div class="src-drop-list">' + rows + '</div>'
+    + '</details>'
+    + '</div>';
+}
+
+function buildCard(item, allItems) {
+  allItems = allItems || [];
+  var score    = parseInt(item.score,10)||0;
+  var cat      = item.category||'news';
+  var col      = CAT_COLOURS[cat]||'#adb5bd';
+  var sv       = sev(score);
+  var cves     = Array.isArray(item.cves)?item.cves:[];
+  var corr     = Array.isArray(item.corroborated)?item.corroborated:[];
+  var matched  = Array.isArray(item.matched)?item.matched:[];
+  var country  = item.country_tag||'';
+  var source   = item.source||'';
+  var artUrl    = item.article_url||item.url||'';  // prefer direct article link
+  var displayUrl= item.url||'';                    // fallback to homepage if no article
+  var srcUrl    = origin(displayUrl);
+  var isFallback= !item.article_url && !!displayUrl; // true when only homepage available
+  var trending  = !!item.trending;
+  var tdays    = parseInt(item.trend_days,10)||0;
+
+  var cveTags = cves.slice(0,5).map(function(c){
+    var ic=corr.indexOf(c)!==-1;
+    return '<span class="'+(ic?'cve-tag cve-c':'cve-tag')+'">'+esc(c)+(ic?'[c]':'')+'</span>';
+  }).join('');
+  var kwTags = matched.slice(0,6).map(function(k){return '<span class="kw-tag">'+esc(k)+'</span>';}).join('');
+  var corrBanner = corr.length?'<div class="corr-banner">++ Corroborated: '+esc(corr.join(', '))+'</div>':'';
+  var trendBanner = trending?'<div class="trend-banner">Trending -- active for '+tdays+' day'+(tdays!==1?'s':'')+'</div>':'';
+  var countryBadge = country?'<span class="country-tag" data-country="'+esc(country)+'">'+esc(country)+'</span>':'';
+  var trendBadge = trending?'<span class="trend-badge" title="Active '+tdays+' consecutive days">TRENDING '+tdays+'d</span>':'';
+  var srcEl = srcUrl
+    ?'<a class="src-name" href="'+esc(srcUrl)+'" target="_blank" rel="noopener noreferrer" title="Visit '+esc(source)+'">'+esc(source)+'</a>'
+    :'<span class="src-name">'+esc(source)+'</span>';
+  // When isFallback, the card-head link goes to the homepage, not an article.
+  // Add a subtle visual cue so the user knows they will land on the homepage.
+  var fallbackBadge = isFallback
+    ?'<span class="fallback-badge" title="No direct article link -- opens source homepage">&#x21A5;</span>'
+    :'';
+  // Title is always a span -- the entire card-head is already wrapped in <a> when a URL exists.
+  // Nested <a> tags are invalid HTML and cause browser click-handling bugs.
+  var titleEl = '<span>'+esc(item.title||'No title')+'</span>';
+
+  return '<article class="card'+(trending?' trending-card':'')+'"'
+    +' data-score="'+score+'"'
+    +' data-cat="'+esc(cat)+'"'
+    +' data-group="'+esc(item.group||'')+'"'
+    +' data-country="'+esc(country)+'"'
+    +' data-source="'+esc(source)+'"'
+    +' data-source-url="'+esc(srcUrl)+'"'
+    +' data-trending="'+(trending?'1':'0')+'"'
+    +'>'
+    +(displayUrl&&displayUrl.indexOf('https://')===0
+    ?'<a class="card-head-link" href="'+esc(displayUrl)+'" target="_blank" rel="noopener noreferrer" style="border-left:3px solid '+col+'">'
+    :'<div class="card-head" style="border-left:3px solid '+col+'">')
+    +'<div class="card-meta">'
+    +'<span class="cat-badge" data-cat="'+esc(cat)+'" style="background:'+col+'22;color:'+col+';border:1px solid '+col+'44">'+esc(cat.toUpperCase())+'</span>'
+    +countryBadge+trendBadge+srcEl
+    +'<span class="item-date">'+esc(item.date||'')+'</span>'
+    +'<span class="score-badge '+sv.cls+'"'+(sv.t?' data-sev="'+sv.t+'"':'')+'>'+score+' '+sv.label+'</span>'
+    +'</div>'
+    +'<h3 class="card-title">'+titleEl+'</h3>'
+    +(displayUrl&&displayUrl.indexOf('https://')===0?'</a>':'</div>')
+    +'<div class="card-body">'+corrBanner+trendBanner
+    +'<p class="card-summary">'+esc((item.summary||'').slice(0,400))+'</p>'
+    +'<div class="tag-row">'+cveTags+kwTags+'</div>'
+    +'</div>'
+    +'</article>';
+}
+
+function showError(msg) {
+  document.getElementById('state-loading').classList.add('hidden');
+  document.getElementById('state-error-msg').textContent = msg;
+  document.getElementById('state-error').classList.remove('hidden');
+}
+
+// Step 1: load data/index.json to discover available dates
+function loadIndex() {
+  fetch(INDEX_URL,{cache:'no-cache'})
+    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status+' -- '+INDEX_URL);return r.json();})
+    .then(function(idx){
+      var dates=(idx.dates||[]).map(function(d){return d.date;}).filter(Boolean);
+      if(!dates.length) throw new Error('index.json has no dates');
+      DATES=dates;
+      buildDatePicker(dates,idx);
+      loadDayFile(dates[0]);
+    })
+    .catch(function(err){showError('Error: '+err.message);});
+}
+
+// Step 2: load data/YYYY-MM-DD.json for selected date
+function loadDayFile(dateStr) {
+  document.getElementById('state-loading').classList.remove('hidden');
+  document.getElementById('state-error').classList.add('hidden');
+  fetch('data/'+dateStr+'.json',{cache:'no-cache'})
+    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status+' fetching '+dateStr+'.json');return r.json();})
+    .then(function(data){CUR_DATE=dateStr;render(data);updateNav();})
+    .catch(function(err){showError('Error: '+err.message);});
+}
+
+function buildDatePicker(dates,idx) {
+  var sel=document.getElementById('date-select');
+  sel.innerHTML='';
+  var statsMap={};
+  (idx.dates||[]).forEach(function(d){if(d.date)statsMap[d.date]=d.stats||{};});
+  dates.forEach(function(d,i){
+    var opt=document.createElement('option');
+    opt.value=d;
+    var st=statsMap[d]||{};
+    var label=d+(i===0?' (today)':'');
+    if(st.critical>0) label+='  C:'+st.critical;
+    if(st.trending>0) label+='  T:'+st.trending;
+    opt.textContent=label;
+    sel.appendChild(opt);
+  });
+  document.getElementById('date-history-note').textContent=dates.length+' day'+(dates.length!==1?'s':'')+' available';
+}
+
+function onDateChange() { loadDayFile(document.getElementById('date-select').value); }
+
+function shiftDate(delta) {
+  var i=DATES.indexOf(CUR_DATE),n=i+delta;
+  if(n<0||n>=DATES.length) return;
+  document.getElementById('date-select').value=DATES[n];
+  loadDayFile(DATES[n]);
+}
+
+function updateNav() {
+  var i=DATES.indexOf(CUR_DATE);
+  document.getElementById('btn-prev').disabled=(i>=DATES.length-1);
+  document.getElementById('btn-next').disabled=(i<=0);
+  document.getElementById('date-select').value=CUR_DATE;
+}
+
+function render(data) {
+  // Build a flat index of all items for cross-referencing in the source dropdown.
+  // Key: matched keyword -> [{source, source_tier, title, url, score}]
+  var allItems=[];
+  GROUP_ORDER.forEach(function(g){
+    var it=((data.groups||{})[g]||{}).items||[];
+    it.forEach(function(item){ allItems.push(item); });
+  });
+
+  var total=0;
+  GROUP_ORDER.forEach(function(g){
+    var items=((data.groups||{})[g]||{}).items||[];
+    total+=items.length;
+    var grid=document.getElementById('group-'+g);
+    if(grid) grid.innerHTML=items.map(function(item){ return buildCard(item, allItems); }).join('');
+    var dc=document.getElementById('dc-'+g); if(dc) dc.textContent=items.length;
+    var nc=document.getElementById('nc-'+g); if(nc) nc.textContent=items.length;
+  });
+  var st=data.stats||{}, ts=data.generated||'';
+  function sv(id,v){var e=document.getElementById(id);if(e)e.textContent=v!==undefined?v:'--';}
+  sv('nc-all',total); sv('sv-all',st.total); sv('sv-critical',st.critical);
+  sv('sv-high',st.high); sv('sv-cve',st.unique_cves); sv('sv-ransomware',st.ransomware);
+  sv('sv-trending',st.trending);
+  var ts2=document.getElementById('topbar-sub');
+  if(ts2) ts2.textContent=ts+' UTC  |  '+(data.feed_count||'--')+' feeds';
+  var ic=document.getElementById('item-count'); if(ic) ic.textContent=total+' items';
+  var ld=document.getElementById('logo-date'); if(ld) ld.textContent=(ts.slice(0,10)||'--')+' // DAILY DIGEST';
+  var ft=document.getElementById('footer-ts'); if(ft) ft.textContent=ts;
+  document.getElementById('state-loading').classList.add('hidden');
+  document.getElementById('topbar').classList.remove('hidden');
+  document.getElementById('content').classList.remove('hidden');
+  document.getElementById('footer').classList.remove('hidden');
+  buildSourceDir(); initScrollFade(); applyFilters();
+}
+
+function applyFilters() {
+  S.sev=parseInt((document.getElementById('f-sev')||{}).value,10)||0;
+  S.cat=((document.getElementById('f-cat')||{}).value)||'all';
+  S.country=((document.getElementById('f-country')||{}).value)||'all';
+  S.text=((document.getElementById('f-text')||{}).value||'').toLowerCase().trim();
+  var cards=document.querySelectorAll('.card');
+  var vis=0,cCrit=0,cHigh=0,cCve=0,cRan=0,cTrend=0;
+  cards.forEach(function(c){
+    var score=parseInt(c.dataset.score,10)||0;
+    var hasCve=!!c.querySelector('.cve-tag,.cve-c');
+    var isTrend=c.dataset.trending==='1';
+    var ok=true;
+    if(S.group!=='all'&&c.dataset.group!==S.group) ok=false;
+    if(S.sev>0&&score<S.sev) ok=false;
+    if(S.statKey==='cve'&&!hasCve) ok=false;
+    if(S.statKey==='ransomware'&&c.dataset.cat!=='ransomware') ok=false;
+    if(S.statKey==='trending'&&!isTrend) ok=false;
+    if(S.cat!=='all'&&c.dataset.cat!==S.cat) ok=false;
+    if(S.country!=='all'&&c.dataset.country!==S.country) ok=false;
+    if(S.text&&!c.textContent.toLowerCase().includes(S.text)) ok=false;
+    c.classList.toggle('hidden',!ok);
+    if(ok){vis++;if(score>=10)cCrit++;if(score>=5&&score<10)cHigh++;if(hasCve)cCve++;if(c.dataset.cat==='ransomware')cRan++;if(isTrend)cTrend++;}
+  });
+  var ic=document.getElementById('item-count'); if(ic) ic.textContent=vis+' items';
+  var na=document.getElementById('nc-all'); if(na) na.textContent=vis;
+  function upd(sel,v){var e=document.querySelector(sel);if(e)e.textContent=v;}
+  upd('#stat-all .stat-val',vis); upd('#stat-critical .stat-val',cCrit);
+  upd('#stat-high .stat-val',cHigh); upd('#stat-cve .stat-val',cCve);
+  upd('#stat-ransomware .stat-val',cRan); upd('#stat-trending .stat-val',cTrend);
+  refreshLabel();
+}
+
+function filterByStat(key){
+  document.querySelectorAll('.stat-row').forEach(function(r){r.classList.remove('active');});
+  document.getElementById('stat-'+key).classList.add('active');
+  S.statKey=key;
+  var sm={all:0,critical:10,high:5,cve:0,ransomware:0,trending:0};
+  S.sev=sm[key]||0; document.getElementById('f-sev').value=String(S.sev);
+  S.cat=(key==='ransomware')?'ransomware':'all'; document.getElementById('f-cat').value=S.cat;
+  applyFilters();
+}
+
+function jumpGroup(g,el){
+  S.group=g;
+  document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
+  if(el) el.classList.add('active');
+  GROUP_ORDER.forEach(function(n){
+    var show=(g==='all'||n===g);
+    var grid=document.getElementById('group-'+n); if(grid) grid.classList.toggle('hidden',!show);
+    var div=document.getElementById('sec-'+n);  if(div)  div.classList.toggle('hidden',!show);
+  });
+  if(g!=='all'){var t=document.getElementById('sec-'+g);if(t)t.scrollIntoView({behavior:'smooth',block:'start'});}
+  applyFilters();
+}
+
+function clearFilters(){
+  document.getElementById('f-sev').value='0';
+  document.getElementById('f-cat').value='all';
+  document.getElementById('f-country').value='all';
+  document.getElementById('f-text').value='';
+  S={sev:0,cat:'all',country:'all',text:'',group:S.group,statKey:'all'};
+  document.querySelectorAll('.stat-row').forEach(function(r){r.classList.remove('active');});
+  document.getElementById('stat-all').classList.add('active');
+  applyFilters();
+}
+
+function refreshLabel(){
+  var parts=[];
+  if(S.sev>0) parts.push('score>='+S.sev);
+  if(S.cat!=='all') parts.push(S.cat);
+  if(S.country!=='all') parts.push(S.country);
+  if(S.statKey==='trending') parts.push('trending');
+  if(S.text) parts.push('"'+S.text+'"');
+  var el=document.getElementById('active-label');
+  if(!el) return;
+  if(parts.length){el.textContent='Active: '+parts.join(' | ');el.classList.add('visible');}
+  else{el.textContent='';el.classList.remove('visible');}
+}
+
+// FIX: explicit anchor passthrough -- do NOT intercept <a href> clicks
+document.addEventListener('click',function(e){
+  var t=e.target;
+  if(t.tagName==='A'&&t.href) return;
+  var anchor=t.closest('a[href]');
+  if(anchor) return;
+  if(t.classList.contains('cve-tag')||t.classList.contains('cve-c')){
+    setSearch(t.textContent.replace('[c]','').trim());
+  } else if(t.classList.contains('kw-tag')){
+    setSearch(t.textContent.trim());
+  } else if(t.classList.contains('cat-badge')){
+    document.getElementById('f-cat').value=t.dataset.cat||'all';
+    S.cat=t.dataset.cat||'all'; applyFilters();
+  } else if(t.classList.contains('country-tag')){
+    document.getElementById('f-country').value=t.textContent.trim();
+    S.country=t.textContent.trim(); applyFilters();
+  } else if(t.classList.contains('score-badge')&&t.dataset.sev){
+    document.getElementById('f-sev').value=t.dataset.sev;
+    S.sev=parseInt(t.dataset.sev,10); applyFilters();
+  }
+});
+
+function setSearch(val){
+  document.getElementById('f-text').value=val;
+  S.text=val.toLowerCase(); S.statKey='all';
+  document.querySelectorAll('.stat-row').forEach(function(r){r.classList.remove('active');});
+  document.getElementById('stat-all').classList.add('active');
+  applyFilters();
+}
+
+function buildSourceDir(){
+  var seen={},links=[];
+  document.querySelectorAll('.card').forEach(function(c){
+    var name=c.dataset.source||'',url=c.dataset.sourceUrl||'';
+    if(!name||seen[name]) return; seen[name]=true; links.push({name:name,url:url});
+  });
+  links.sort(function(a,b){return a.name.localeCompare(b.name);});
+  var INIT=20,list=document.getElementById('source-list');
+  list.innerHTML='';
+  function mk(s){var a=document.createElement('a');a.className='source-link';a.textContent=s.name;a.title=s.name;a.href=s.url||'#';if(s.url){a.target='_blank';a.rel='noopener noreferrer';}return a;}
+  links.slice(0,INIT).forEach(function(s){list.appendChild(mk(s));});
+  if(links.length>INIT){
+    var more=document.createElement('div');more.className='source-link-more';
+    more.textContent='+ '+(links.length-INIT)+' more...';
+    more.onclick=function(){links.slice(INIT).forEach(function(s){list.insertBefore(mk(s),more);});more.remove();};
+    list.appendChild(more);
+  }
+}
+
+function initScrollFade(){
+  var BRIGHT=5,main=document.getElementById('main');
+  document.querySelectorAll('.card').forEach(function(c){
+    if((parseInt(c.dataset.score,10)||0)>=BRIGHT) c.classList.add('keep-bright');
+    else c.classList.remove('keep-bright');
+  });
+  if(window._obs) window._obs.disconnect();
+  window._obs=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.target.classList.contains('keep-bright')) return;
+      e.target.classList.toggle('out-of-focus',!e.isIntersecting);
+    });
+  },{root:main,rootMargin:'0px 0px -15% 0px',threshold:0});
+  document.querySelectorAll('.card:not(.keep-bright)').forEach(function(c){window._obs.observe(c);});
+}
+
+loadIndex();
+</script>
+</body>
+</html>
