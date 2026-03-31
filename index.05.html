@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prism Intel Feed</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<style>
+  body { background: #0d1117; color: #c9d1d9; }
+
+  /* Sidebar */
+  #sidebar { width: 240px; min-width: 240px; background: #010409; border-right: 1px solid #21262d; height: 100vh; overflow-y: auto; }
+  .sidebar-brand { font-size: 1.2rem; font-weight: 700; letter-spacing: .1em; color: #58a6ff; }
+  .nav-link { color: #8b949e; font-size: .85rem; padding: .35rem .75rem; border-radius: 6px; }
+  .nav-link:hover, .nav-link.active { background: #161b22; color: #c9d1d9; }
+  .nav-link .badge { font-size: .7rem; }
+  .sidebar-section { font-size: .7rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #484f58; padding: .5rem .75rem .25rem; }
+
+  /* Topbar */
+  #topbar { background: #010409; border-bottom: 1px solid #21262d; }
+  #topbar .last-updated { font-size: .75rem; color: #484f58; }
+
+  /* Score severity colours */
+  .sev-critical { color: #f85149; }
+  .sev-high     { color: #d29922; }
+  .sev-medium   { color: #388bfd; }
+  .sev-low      { color: #8b949e; }
+  .badge-critical { background: rgba(248,81,73,.15); color: #f85149; border: 1px solid rgba(248,81,73,.3); }
+  .badge-high     { background: rgba(210,153,34,.15); color: #d29922; border: 1px solid rgba(210,153,34,.3); }
+  .badge-medium   { background: rgba(56,139,253,.15); color: #388bfd; border: 1px solid rgba(56,139,253,.3); }
+  .badge-low      { background: rgba(139,148,158,.15); color: #8b949e; border: 1px solid rgba(139,148,158,.3); }
+  .badge-trending { background: rgba(255,170,0,.12); color: #f0a500; border: 1px solid rgba(255,170,0,.25); }
+  .badge-new      { background: rgba(88,166,255,.15); color: #58a6ff; border: 1px solid rgba(88,166,255,.3); }
+  .badge-cat      { background: #161b22; color: #8b949e; border: 1px solid #30363d; font-size: .68rem; }
+
+  /* CARD VIEW */
+  .feed-card {
+    background: #161b22;
+    border: 1px solid #21262d;
+    border-radius: 8px;
+    transition: border-color .15s, opacity .2s;
+    cursor: pointer;
+  }
+  .feed-card:hover { border-color: #388bfd; }
+  .feed-card.is-read { opacity: .45; }
+  .feed-card.is-read:hover { opacity: .75; }
+  .feed-card .card-title { font-size: .95rem; font-weight: 600; color: #e6edf3; line-height: 1.4; }
+  .feed-card.is-read .card-title { color: #8b949e; }
+  .feed-card .card-summary { font-size: .8rem; color: #8b949e; line-height: 1.5; }
+  .feed-card .card-meta { font-size: .75rem; color: #484f58; }
+  .feed-card .card-source { font-size: .78rem; font-weight: 600; color: #58a6ff; }
+  .feed-card .sev-bar { width: 3px; border-radius: 2px; flex-shrink: 0; }
+  .feed-card .btn-read { opacity: 0; transition: opacity .15s; }
+  .feed-card:hover .btn-read { opacity: 1; }
+  .cve-tag { font-size: .7rem; font-family: monospace; background: rgba(56,139,253,.1); color: #388bfd; border: 1px solid rgba(56,139,253,.2); border-radius: 4px; padding: 1px 6px; }
+
+  /* TABLE VIEW */
+  #table-view .table { font-size: .82rem; }
+  #table-view .table td { vertical-align: middle; border-color: #21262d; padding: .5rem .75rem; }
+  #table-view .table tr.is-read td { opacity: .4; }
+  #table-view .table tr.is-read:hover td { opacity: .75; }
+  #table-view .table tbody tr { cursor: pointer; transition: background .1s; }
+  #table-view .table tbody tr:hover { background: #161b22; }
+  #table-view .table .title-cell { max-width: 380px; }
+  #table-view .table .title-cell .item-title { font-weight: 600; color: #e6edf3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; max-width: 380px; }
+  #table-view .table tr.is-read .item-title { color: #8b949e; }
+
+  /* Empty state */
+  .empty-state { color: #484f58; }
+
+  /* Scrollable main */
+  #main-scroll { height: 100vh; overflow-y: auto; }
+
+  /* Sidebar overlay mobile */
+  @media (max-width: 767px) {
+    #sidebar { position: fixed; left: -240px; top: 0; z-index: 1050; transition: left .25s; height: 100vh; }
+    #sidebar.show { left: 0; }
+    #overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1040; }
+    #overlay.show { display: block; }
+  }
+
+  /* Skeleton loader */
+  .skeleton { background: linear-gradient(90deg, #161b22 25%, #1c2129 50%, #161b22 75%); background-size: 200%; animation: shimmer 1.4s infinite; border-radius: 6px; }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+</style>
+</head>
+<body>
+
+<div id="overlay" onclick="closeSidebar()"></div>
+
+<div class="d-flex" style="height:100vh;overflow:hidden">
+
+  <!-- SIDEBAR -->
+  <nav id="sidebar" class="d-flex flex-column py-3 px-2 flex-shrink-0">
+    <div class="px-2 mb-3 d-flex align-items-center gap-2">
+      <i class="fa-solid fa-prism fa-fw" style="color:#58a6ff"></i>
+      <span class="sidebar-brand">PRISM</span>
+    </div>
+
+    <div class="sidebar-section">View</div>
+    <ul class="nav flex-column mb-2" id="group-nav">
+      <li class="nav-item">
+        <a class="nav-link active" href="#" data-group="all" onclick="filterGroup('all',this)">
+          <i class="fa-solid fa-layer-group fa-fw me-2"></i>All Items
+          <span class="badge rounded-pill ms-auto" id="cnt-all" style="background:#21262d;color:#8b949e">--</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#" data-group="threat_intel" onclick="filterGroup('threat_intel',this)">
+          <i class="fa-solid fa-shield-halved fa-fw me-2"></i>Threat Intel
+          <span class="badge rounded-pill ms-auto" id="cnt-threat_intel" style="background:#21262d;color:#8b949e">--</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#" data-group="news" onclick="filterGroup('news',this)">
+          <i class="fa-solid fa-newspaper fa-fw me-2"></i>News
+          <span class="badge rounded-pill ms-auto" id="cnt-news" style="background:#21262d;color:#8b949e">--</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#" data-group="government" onclick="filterGroup('government',this)">
+          <i class="fa-solid fa-landmark fa-fw me-2"></i>Government
+          <span class="badge rounded-pill ms-auto" id="cnt-government" style="background:#21262d;color:#8b949e">--</span>
+        </a>
+      </li>
+    </ul>
+
+    <div class="sidebar-section mt-2">Filter</div>
+    <ul class="nav flex-column mb-2">
+      <li class="nav-item">
+        <a class="nav-link" href="#" onclick="filterUnread(this)">
+          <i class="fa-regular fa-circle-dot fa-fw me-2" style="color:#58a6ff"></i>Unread
+          <span class="badge rounded-pill ms-auto" id="cnt-unread" style="background:#21262d;color:#8b949e">--</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#" onclick="filterTrending(this)">
+          <i class="fa-solid fa-fire fa-fw me-2" style="color:#f0a500"></i>Trending
+          <span class="badge rounded-pill ms-auto" id="cnt-trending" style="background:#21262d;color:#8b949e">--</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#" onclick="filterCritical(this)">
+          <i class="fa-solid fa-triangle-exclamation fa-fw me-2 sev-critical"></i>Critical
+          <span class="badge rounded-pill ms-auto" id="cnt-critical" style="background:#21262d;color:#8b949e">--</span>
+        </a>
+      </li>
+    </ul>
+
+    <div class="mt-auto px-2">
+      <button class="btn btn-sm btn-outline-secondary w-100" onclick="markAllRead()">
+        <i class="fa-solid fa-check-double me-1"></i>Mark all read
+      </button>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="flex-grow-1 d-flex flex-column" style="min-width:0;overflow:hidden">
+
+    <!-- TOPBAR -->
+    <div id="topbar" class="px-3 py-2 d-flex align-items-center gap-3 flex-shrink-0">
+      <button class="btn btn-sm btn-outline-secondary d-md-none" onclick="openSidebar()">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+
+      <div class="d-flex align-items-center gap-2 me-auto">
+        <span id="topbar-title" class="fw-semibold" style="font-size:.9rem">All Items</span>
+        <span id="topbar-count" class="badge" style="background:#21262d;color:#8b949e;font-size:.72rem">--</span>
+      </div>
+
+      <span class="last-updated d-none d-sm-block">
+        <i class="fa-regular fa-clock me-1"></i>
+        <span id="last-updated-ts">--</span>
+      </span>
+
+      <!-- Search -->
+      <div class="input-group input-group-sm" style="width:200px">
+        <span class="input-group-text" style="background:#161b22;border-color:#30363d">
+          <i class="fa-solid fa-magnifying-glass" style="color:#484f58;font-size:.75rem"></i>
+        </span>
+        <input type="text" id="search-input" class="form-control form-control-sm"
+          placeholder="Search..." oninput="applySearch()"
+          style="background:#161b22;border-color:#30363d;color:#c9d1d9;font-size:.82rem">
+      </div>
+
+      <!-- View toggle -->
+      <div class="btn-group btn-group-sm">
+        <button id="btn-card-view" class="btn btn-outline-secondary active" onclick="setView('card')" title="Card view">
+          <i class="fa-solid fa-grip"></i>
+        </button>
+        <button id="btn-table-view" class="btn btn-outline-secondary" onclick="setView('table')" title="Table view">
+          <i class="fa-solid fa-table-list"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div id="main-scroll" class="flex-grow-1">
+
+      <!-- Loading skeletons -->
+      <div id="state-loading" class="p-3">
+        <div class="row g-3">
+          <div class="col-12 col-md-6 col-xl-4" id="sk1">
+            <div class="p-3 rounded" style="background:#161b22;border:1px solid #21262d">
+              <div class="skeleton mb-2" style="height:14px;width:60%"></div>
+              <div class="skeleton mb-1" style="height:18px;width:90%"></div>
+              <div class="skeleton mb-1" style="height:18px;width:75%"></div>
+              <div class="skeleton mt-2" style="height:12px;width:40%"></div>
+            </div>
+          </div>
+          <div class="col-12 col-md-6 col-xl-4">
+            <div class="p-3 rounded" style="background:#161b22;border:1px solid #21262d">
+              <div class="skeleton mb-2" style="height:14px;width:50%"></div>
+              <div class="skeleton mb-1" style="height:18px;width:85%"></div>
+              <div class="skeleton mb-1" style="height:18px;width:70%"></div>
+              <div class="skeleton mt-2" style="height:12px;width:35%"></div>
+            </div>
+          </div>
+          <div class="col-12 col-md-6 col-xl-4 d-none d-xl-block">
+            <div class="p-3 rounded" style="background:#161b22;border:1px solid #21262d">
+              <div class="skeleton mb-2" style="height:14px;width:55%"></div>
+              <div class="skeleton mb-1" style="height:18px;width:80%"></div>
+              <div class="skeleton mb-1" style="height:18px;width:65%"></div>
+              <div class="skeleton mt-2" style="height:12px;width:45%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error -->
+      <div id="state-error" class="d-none p-5 text-center empty-state">
+        <i class="fa-solid fa-circle-xmark fa-2x mb-3 d-block" style="color:#f85149"></i>
+        <div id="error-msg" class="mb-2">Failed to load feed</div>
+        <button class="btn btn-sm btn-outline-secondary" onclick="loadData()">
+          <i class="fa-solid fa-rotate-right me-1"></i>Retry
+        </button>
+      </div>
+
+      <!-- CARD VIEW -->
+      <div id="card-view" class="d-none p-3">
+        <div class="row g-3" id="card-container"></div>
+        <div id="card-empty" class="d-none p-5 text-center empty-state">
+          <i class="fa-regular fa-folder-open fa-2x mb-2 d-block"></i>
+          No items match
+        </div>
+      </div>
+
+      <!-- TABLE VIEW -->
+      <div id="table-view" class="d-none">
+        <table class="table table-hover mb-0">
+          <thead style="background:#010409;position:sticky;top:0;z-index:10">
+            <tr>
+              <th style="width:30px;border-color:#21262d"></th>
+              <th style="border-color:#21262d;font-size:.75rem;color:#484f58;font-weight:600;letter-spacing:.06em;text-transform:uppercase">Title</th>
+              <th style="border-color:#21262d;font-size:.75rem;color:#484f58;font-weight:600;letter-spacing:.06em;text-transform:uppercase;width:130px">Source</th>
+              <th style="border-color:#21262d;font-size:.75rem;color:#484f58;font-weight:600;letter-spacing:.06em;text-transform:uppercase;width:90px">Score</th>
+              <th style="border-color:#21262d;font-size:.75rem;color:#484f58;font-weight:600;letter-spacing:.06em;text-transform:uppercase;width:110px" class="d-none d-md-table-cell">Category</th>
+              <th style="border-color:#21262d;font-size:.75rem;color:#484f58;font-weight:600;letter-spacing:.06em;text-transform:uppercase;width:120px" class="d-none d-lg-table-cell">Date</th>
+              <th style="border-color:#21262d;width:40px"></th>
+            </tr>
+          </thead>
+          <tbody id="table-container"></tbody>
+        </table>
+        <div id="table-empty" class="d-none p-5 text-center empty-state">
+          <i class="fa-regular fa-folder-open fa-2x mb-2 d-block"></i>
+          No items match
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script>
+'use strict';
+
+// - Config -
+var DATA_URL  = 'https://scorchederf.github.io/prism/data/2026-03-31.json';
+var READ_KEY  = 'prism_read_v1';      // localStorage key -> Set of hashes
+var SEEN_KEY  = 'prism_seen_v1';      // localStorage key -> Set of hashes seen on first load
+var REFRESH_MS = 60 * 60 * 1000;     // auto-refresh every 60 min
+
+// - State -
+var ALL_ITEMS  = [];        // flat sorted array, all items
+var VIEW       = 'card';   // 'card' | 'table'
+var FILTER     = { group:'all', special:null, search:'' };
+var READ_SET   = new Set();
+var SEEN_SET   = new Set(); // hashes that existed on first visit (not "new")
+
+// - Persistence -
+function loadRead()   { try { return new Set(JSON.parse(localStorage.getItem(READ_KEY)||'[]')); } catch(e){ return new Set(); } }
+function saveRead()   { try { localStorage.setItem(READ_KEY, JSON.stringify([...READ_SET])); } catch(e){} }
+function loadSeen()   { try { return new Set(JSON.parse(localStorage.getItem(SEEN_KEY)||'[]')); } catch(e){ return new Set(); } }
+function saveSeen()   { try { localStorage.setItem(SEEN_KEY, JSON.stringify([...SEEN_SET])); } catch(e){} }
+function isRead(h)    { return READ_SET.has(h); }
+function isNew(h)     { return !SEEN_SET.has(h); }
+function markRead(h)  { READ_SET.add(h); saveRead(); }
+function markUnread(h){ READ_SET.delete(h); saveRead(); }
+
+// - Severity helpers -
+function sevClass(score) {
+  if (score >= 10) return 'critical';
+  if (score >= 5)  return 'high';
+  if (score >= 2)  return 'medium';
+  return 'low';
+}
+function sevIcon(score) {
+  if (score >= 10) return 'fa-triangle-exclamation';
+  if (score >= 5)  return 'fa-circle-exclamation';
+  if (score >= 2)  return 'fa-circle-info';
+  return 'fa-circle';
+}
+function sevBarColor(score) {
+  if (score >= 10) return '#f85149';
+  if (score >= 5)  return '#d29922';
+  if (score >= 2)  return '#388bfd';
+  return '#30363d';
+}
+
+// - Date formatting -
+function toLocal(utcStr) {
+  if (!utcStr) return '';
+  var d = new Date(utcStr.replace(' ','T').replace(' UTC','Z'));
+  if (isNaN(d)) return utcStr;
+  try {
+    return d.toLocaleString('en-AU', {
+      timeZone:'Australia/Brisbane', month:'short', day:'numeric',
+      hour:'2-digit', minute:'2-digit', hour12:false
+    }) + ' AEST';
+  } catch(e) { return utcStr; }
+}
+
+// - Sort: unread first, then score desc -
+function sortItems(items) {
+  return items.slice().sort(function(a,b) {
+    var ar = isRead(a.hash), br = isRead(b.hash);
+    if (ar !== br) return ar ? 1 : -1;
+    return (b.score||0) - (a.score||0);
+  });
+}
+
+// - Filter -
+function applyFilter(items) {
+  return items.filter(function(item) {
+    if (FILTER.group !== 'all' && item.group !== FILTER.group) return false;
+    if (FILTER.special === 'unread'   && isRead(item.hash))    return false;
+    if (FILTER.special === 'trending' && !item.trending)        return false;
+    if (FILTER.special === 'critical' && item.score < 10)       return false;
+    if (FILTER.search) {
+      var q = FILTER.search.toLowerCase();
+      var hay = (item.title+' '+item.source+' '+(item.cves||[]).join(' ')+(item.summary||'')).toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+// - HTML helpers -
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function sevBadge(score) {
+  var s = sevClass(score), icon = sevIcon(score);
+  return '<span class="badge badge-'+s+' rounded-pill"><i class="fa-solid '+icon+' me-1"></i>'+score+'</span>';
+}
+
+// - Build card HTML -
+function buildCard(item) {
+  var read     = isRead(item.hash);
+  var isNewItem= isNew(item.hash);
+  var sev      = sevClass(item.score);
+  var barColor = sevBarColor(item.score);
+  var cves     = (item.cves||[]).slice(0,3).map(function(c){ return '<span class="cve-tag me-1">'+esc(c)+'</span>'; }).join('');
+  var badges   = '';
+  if (isNewItem && !read) badges += '<span class="badge badge-new me-1">NEW</span>';
+  if (item.trending)      badges += '<span class="badge badge-trending me-1"><i class="fa-solid fa-fire me-1"></i>'+item.trend_days+'d</span>';
+  badges += '<span class="badge badge-cat">'+esc(item.category||item.group)+'</span>';
+
+  return '<div class="col-12 col-md-6 col-xl-4">'
+    +'<div class="feed-card h-100 d-flex gap-0 overflow-hidden'+(read?' is-read':'')+'" '
+    +'data-hash="'+esc(item.hash)+'" data-url="'+esc(item.url||'')+'" onclick="handleCardClick(event,this)">'
+    +'<div class="sev-bar" style="background:'+barColor+'"></div>'
+    +'<div class="p-3 flex-grow-1 d-flex flex-column gap-2" style="min-width:0">'
+    +'<div class="d-flex align-items-start justify-content-between gap-2">'
+    +'<span class="card-source">'+esc(item.source)+'</span>'
+    +'<div class="d-flex align-items-center gap-2 flex-shrink-0">'
+    +sevBadge(item.score)
+    +'<button class="btn btn-sm btn-read p-0 border-0 bg-transparent" '
+    +'onclick="event.stopPropagation();toggleRead(\''+esc(item.hash)+'\',this.closest(\'.feed-card\'))" '
+    +'title="'+(read?'Mark unread':'Mark read')+'" style="color:#484f58;font-size:.8rem">'
+    +(read?'<i class="fa-solid fa-rotate-left"></i>':'<i class="fa-regular fa-circle-check"></i>')
+    +'</button>'
+    +'</div>'
+    +'</div>'
+    +'<h3 class="card-title mb-0">'+esc(item.title)+'</h3>'
+    +(item.summary ? '<p class="card-summary mb-0">'+esc(item.summary.slice(0,160))+'...</p>' : '')
+    +'<div class="d-flex align-items-center flex-wrap gap-2 mt-auto">'
+    +badges
+    +(cves ? '<span class="ms-auto d-flex flex-wrap gap-1">'+cves+'</span>' : '')
+    +'</div>'
+    +'<div class="card-meta">'+toLocal(item.date)+'</div>'
+    +'</div>'
+    +'</div>'
+    +'</div>';
+}
+
+// - Build table row HTML -
+function buildRow(item) {
+  var read     = isRead(item.hash);
+  var isNewItem= isNew(item.hash);
+  var sev      = sevClass(item.score);
+  return '<tr class="'+(read?'is-read':'')+'" data-hash="'+esc(item.hash)+'" data-url="'+esc(item.url||'')+'" onclick="handleRowClick(event,this)">'
+    +'<td style="width:30px;padding:.5rem .4rem">'
+    +(isNewItem && !read ? '<i class="fa-solid fa-circle" style="color:#388bfd;font-size:.45rem"></i>' : '')
+    +'</td>'
+    +'<td class="title-cell">'
+    +'<span class="item-title">'+esc(item.title)+'</span>'
+    +(item.trending ? ' <span class="badge badge-trending" style="font-size:.65rem"><i class="fa-solid fa-fire"></i></span>' : '')
+    +'</td>'
+    +'<td><span style="color:#58a6ff;font-size:.78rem">'+esc(item.source)+'</span></td>'
+    +'<td>'+sevBadge(item.score)+'</td>'
+    +'<td class="d-none d-md-table-cell"><span class="badge badge-cat">'+esc(item.category||item.group)+'</span></td>'
+    +'<td class="d-none d-lg-table-cell" style="color:#484f58;font-size:.75rem;white-space:nowrap">'+toLocal(item.date)+'</td>'
+    +'<td onclick="event.stopPropagation()">'
+    +'<button class="btn btn-sm p-0 border-0 bg-transparent" '
+    +'onclick="toggleRead(\''+esc(item.hash)+'\',this.closest(\'tr\'))" '
+    +'title="'+(read?'Mark unread':'Mark read')+'" style="color:#484f58;font-size:.8rem">'
+    +(read?'<i class="fa-solid fa-rotate-left"></i>':'<i class="fa-regular fa-circle-check"></i>')
+    +'</button>'
+    +'</td>'
+    +'</tr>';
+}
+
+// - Render -
+function render() {
+  var filtered = applyFilter(sortItems(ALL_ITEMS));
+
+  // Update counts in sidebar
+  var grpCounts = { threat_intel:0, news:0, government:0 };
+  var unreadCnt=0, trendCnt=0, critCnt=0;
+  ALL_ITEMS.forEach(function(item) {
+    if (grpCounts[item.group] !== undefined) grpCounts[item.group]++;
+    if (!isRead(item.hash)) unreadCnt++;
+    if (item.trending) trendCnt++;
+    if (item.score >= 10) critCnt++;
+  });
+  el('cnt-all').textContent         = ALL_ITEMS.length;
+  el('cnt-threat_intel').textContent= grpCounts.threat_intel;
+  el('cnt-news').textContent        = grpCounts.news;
+  el('cnt-government').textContent  = grpCounts.government;
+  el('cnt-unread').textContent      = unreadCnt;
+  el('cnt-trending').textContent    = trendCnt;
+  el('cnt-critical').textContent    = critCnt;
+  el('topbar-count').textContent    = filtered.length;
+
+  if (VIEW === 'card') renderCards(filtered);
+  else                  renderTable(filtered);
+}
+
+function renderCards(items) {
+  var c = el('card-container');
+  c.innerHTML = items.map(buildCard).join('');
+  el('card-empty').classList.toggle('d-none', items.length > 0);
+}
+
+function renderTable(items) {
+  var t = el('table-container');
+  t.innerHTML = items.map(buildRow).join('');
+  el('table-empty').classList.toggle('d-none', items.length > 0);
+}
+
+// - Interactions -
+function handleCardClick(e, card) {
+  var url = card.dataset.url;
+  if (url) {
+    markRead(card.dataset.hash);
+    card.classList.add('is-read');
+    card.querySelector('.card-title').style.color = '';
+    var btn = card.querySelector('.btn-read');
+    if (btn) btn.innerHTML = '<i class="fa-solid fa-rotate-left"></i>';
+    refreshCounts();
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+}
+function handleRowClick(e, row) {
+  var url = row.dataset.url;
+  if (url) {
+    markRead(row.dataset.hash);
+    row.classList.add('is-read');
+    var btn = row.querySelector('.btn-read, button[title]');
+    if (btn) btn.innerHTML = '<i class="fa-solid fa-rotate-left"></i>';
+    refreshCounts();
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+}
+
+function toggleRead(hash, el_) {
+  if (isRead(hash)) { markUnread(hash); } else { markRead(hash); }
+  render();
+}
+
+function markAllRead() {
+  applyFilter(ALL_ITEMS).forEach(function(item){ markRead(item.hash); });
+  render();
+}
+
+function refreshCounts() {
+  var unread = ALL_ITEMS.filter(function(i){ return !isRead(i.hash); }).length;
+  el('cnt-unread').textContent = unread;
+  el('topbar-count').textContent = applyFilter(sortItems(ALL_ITEMS)).length;
+}
+
+// - View toggle -
+function setView(v) {
+  VIEW = v;
+  el('card-view').classList.toggle('d-none', v !== 'card');
+  el('table-view').classList.toggle('d-none', v !== 'table');
+  el('btn-card-view').classList.toggle('active', v === 'card');
+  el('btn-table-view').classList.toggle('active', v === 'table');
+  render();
+}
+
+// - Filters -
+function filterGroup(g, link) {
+  FILTER.group = g; FILTER.special = null;
+  setActiveNav(link);
+  el('topbar-title').textContent = link.textContent.trim().replace(/\d+/g,'').trim();
+  render();
+}
+function filterUnread(link) {
+  FILTER.special = FILTER.special === 'unread' ? null : 'unread';
+  setActiveNav(FILTER.special ? link : null);
+  el('topbar-title').textContent = FILTER.special ? 'Unread' : 'All Items';
+  render();
+}
+function filterTrending(link) {
+  FILTER.special = FILTER.special === 'trending' ? null : 'trending';
+  setActiveNav(FILTER.special ? link : null);
+  el('topbar-title').textContent = FILTER.special ? 'Trending' : 'All Items';
+  render();
+}
+function filterCritical(link) {
+  FILTER.special = FILTER.special === 'critical' ? null : 'critical';
+  setActiveNav(FILTER.special ? link : null);
+  el('topbar-title').textContent = FILTER.special ? 'Critical' : 'All Items';
+  render();
+}
+function setActiveNav(activeLink) {
+  document.querySelectorAll('#sidebar .nav-link').forEach(function(l){ l.classList.remove('active'); });
+  if (activeLink) activeLink.classList.add('active');
+}
+function applySearch() {
+  FILTER.search = el('search-input').value.trim();
+  render();
+}
+
+// - Sidebar mobile -
+function openSidebar()  { el('sidebar').classList.add('show');  el('overlay').classList.add('show'); }
+function closeSidebar() { el('sidebar').classList.remove('show'); el('overlay').classList.remove('show'); }
+
+// - Data loading -
+function loadData() {
+  el('state-loading').classList.remove('d-none');
+  el('state-error').classList.add('d-none');
+  el('card-view').classList.add('d-none');
+  el('table-view').classList.add('d-none');
+
+  fetch(DATA_URL, { cache:'no-cache' })
+    .then(function(r) { if (!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .then(function(data) {
+      // Flatten all groups into one array
+      ALL_ITEMS = [];
+      Object.values(data.groups||{}).forEach(function(g) {
+        (g.items||[]).forEach(function(item) { ALL_ITEMS.push(item); });
+      });
+
+      // Mark seen hashes on first visit
+      var isFirstVisit = SEEN_SET.size === 0;
+      if (isFirstVisit) {
+        ALL_ITEMS.forEach(function(item) { SEEN_SET.add(item.hash); });
+        saveSeen();
+      }
+
+      // Update last-updated
+      var ts = data.generated || '';
+      if (ts) {
+        var d = new Date(ts.replace(' ','T')+'Z');
+        if (!isNaN(d)) {
+          try {
+            el('last-updated-ts').textContent = d.toLocaleString('en-AU',{
+              timeZone:'Australia/Brisbane', month:'short', day:'numeric',
+              hour:'2-digit', minute:'2-digit', hour12:false
+            }) + ' AEST';
+          } catch(e) { el('last-updated-ts').textContent = ts; }
+        }
+      }
+
+      el('state-loading').classList.add('d-none');
+      if (VIEW === 'card') el('card-view').classList.remove('d-none');
+      else                  el('table-view').classList.remove('d-none');
+      render();
+    })
+    .catch(function(err) {
+      el('state-loading').classList.add('d-none');
+      el('state-error').classList.remove('d-none');
+      el('error-msg').textContent = 'Failed to load: ' + err.message;
+    });
+}
+
+// - Auto-refresh -
+setTimeout(function tick() {
+  loadData();
+  setTimeout(tick, REFRESH_MS);
+}, REFRESH_MS);
+
+// - Util -
+function el(id) { return document.getElementById(id); }
+
+// - Boot -
+READ_SET = loadRead();
+SEEN_SET = loadSeen();
+loadData();
+</script>
+</body>
+</html>
