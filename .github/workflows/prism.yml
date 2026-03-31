@@ -2,7 +2,7 @@ name: Prism Hourly Fetch
 
 on:
   schedule:
-    - cron: '0 * * * *'
+    - cron: '0 */3 * * *'
   workflow_dispatch:          # allow manual trigger
 
 jobs:
