@@ -1,6 +1,18 @@
 {
-  "updated": "2026-06-19 22:02",
+  "updated": "2026-06-20 02:52",
   "dates": [
+    {
+      "date": "2026-06-20",
+      "generated": "2026-06-20 02:52",
+      "stats": {
+        "total": 454,
+        "critical": 85,
+        "high": 145,
+        "unique_cves": 87,
+        "ransomware": 115,
+        "trending": 175
+      }
+    },
     {
       "date": "2026-06-19",
       "generated": "2026-06-19 22:02",
@@ -347,18 +359,6 @@
         "unique_cves": 221,
         "ransomware": 114,
         "trending": 151
-      }
-    },
-    {
-      "date": "2026-05-21",
-      "generated": "2026-05-21 22:18",
-      "stats": {
-        "total": 477,
-        "critical": 85,
-        "high": 105,
-        "unique_cves": 52,
-        "ransomware": 119,
-        "trending": 183
       }
     }
   ]
