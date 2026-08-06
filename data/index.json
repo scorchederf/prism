@@ -1,16 +1,16 @@
 {
-  "updated": "2026-08-06 11:17",
+  "updated": "2026-08-06 13:54",
   "dates": [
     {
       "date": "2026-08-06",
-      "generated": "2026-08-06 11:17",
+      "generated": "2026-08-06 13:54",
       "stats": {
-        "total": 550,
-        "critical": 78,
-        "high": 124,
+        "total": 528,
+        "critical": 70,
+        "high": 121,
         "unique_cves": 29,
-        "ransomware": 224,
-        "trending": 194
+        "ransomware": 191,
+        "trending": 185
       }
     },
     {
